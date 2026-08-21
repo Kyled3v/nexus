@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-page: #f8f9fa;
+    --bg-card: #ffffff;
+    --bg-sidebar: #ffffff;
+    --bg-header: #ffffff;
+    --border: #e9ecef;
+    --text-primary: #212529;
+    --text-secondary: #868e96;
+    --text-muted: #adb5bd;
+    --accent: #4a51e8;
+    --accent-hover: #3b3fcf;
+    --accent-subtle: #f0f4ff;
+  }
+  .dark {
+    --bg-page: #0d0f12;
+    --bg-card: #161a1f;
+    --bg-sidebar: #111418;
+    --bg-header: #111418;
+    --border: #343a40;
+    --text-primary: #f8f9fa;
+    --text-secondary: #ced4da;
+    --text-muted: #868e96;
+    --accent: #6172f3;
+    --accent-hover: #8098f9;
+    --accent-subtle: #1c1f52;
+  }
+  body {
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+  }
+}
+@layer utilities {
+  .text-primary { color: var(--text-primary); }
+  .text-secondary { color: var(--text-secondary); }
+  .text-muted { color: var(--text-muted); }
+  .bg-page { background-color: var(--bg-page); }
+  .bg-card { background-color: var(--bg-card); }
+  .bg-sidebar { background-color: var(--bg-sidebar); }
+  .bg-header { background-color: var(--bg-header); }
+  .border-base { border-color: var(--border); }
+  .accent { color: var(--accent); }
+  .bg-accent { background-color: var(--accent); }
+  .bg-accent-subtle { background-color: var(--accent-subtle); }
+}
