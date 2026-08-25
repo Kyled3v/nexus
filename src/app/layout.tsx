@@ -1,10 +1,7 @@
-﻿import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import type { Metadata } from "next";
 import "./globals.css";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: { default: "NEXUS", template: "%s | NEXUS" },
@@ -13,13 +10,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
-        <div className="flex h-screen overflow-hidden">
+    <html lang="en" data-theme="light">
+      <body>
+        <div className="app-shell">
           <Sidebar />
-          <div className="flex flex-col flex-1 overflow-hidden">
+          <div className="app-shell__main">
             <Header />
-            <main className="flex-1 overflow-y-auto bg-page p-6">
+            <main className="app-shell__content">
               {children}
             </main>
           </div>

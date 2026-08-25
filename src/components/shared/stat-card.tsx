@@ -1,4 +1,3 @@
-import { cn } from "@/lib/utils/cn";
 import type { LucideIcon } from "lucide-react";
 
 interface StatCardProps {
@@ -11,32 +10,23 @@ interface StatCardProps {
   className?: string;
 }
 
-const variantIcon: Record<string, string> = {
-  default: "bg-blue-50 text-blue-600",
-  success: "bg-green-50 text-green-600",
-  warning: "bg-amber-50 text-amber-600",
-  danger:  "bg-red-50 text-red-600",
-};
-
 export function StatCard({ label, value, sub, icon: Icon, trend, variant = "default", className }: StatCardProps) {
   return (
-    <div className={cn("bg-card border border-base rounded-xl p-5 shadow-card flex flex-col gap-3", className)}>
-      <div className="flex items-start justify-between">
-        <span className="text-xs font-medium text-secondary uppercase tracking-wider">{label}</span>
-        {Icon && <span className={cn("p-2 rounded-lg", variantIcon[variant])}><Icon size={15} /></span>}
-      </div>
-      <div>
-        <p className="text-2xl font-bold text-primary tracking-tight">{value}</p>
-        {sub && <p className="text-xs text-muted mt-0.5">{sub}</p>}
+    <article className={["stat-card", "stat-card--" + variant, className ?? ""].join(" ").trim()} data-variant={variant}>
+      <header className="stat-card__header">
+        <span className="stat-card__label">{label}</span>
+        {Icon && <span className="stat-card__icon" aria-hidden="true"><Icon size={16} /></span>}
+      </header>
+      <div className="stat-card__body">
+        <p className="stat-card__value">{value}</p>
+        {sub && <p className="stat-card__sub">{sub}</p>}
       </div>
       {trend && (
-        <div className="flex items-center gap-1">
-          <span className={cn("text-xs font-medium", trend.value >= 0 ? "text-green-600" : "text-red-600")}>
-            {trend.value >= 0 ? "+" : ""}{trend.value}%
-          </span>
-          <span className="text-xs text-muted">{trend.label}</span>
-        </div>
+        <footer className="stat-card__trend" data-positive={trend.value >= 0}>
+          <span className="stat-card__trend-value">{trend.value >= 0 ? "+" : ""}{trend.value}%</span>
+          <span className="stat-card__trend-label">{trend.label}</span>
+        </footer>
       )}
-    </div>
+    </article>
   );
 }

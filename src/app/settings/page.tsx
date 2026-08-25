@@ -1,136 +1,115 @@
 "use client";
-
 import { useState } from "react";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DEMO_BUSINESS, DEMO_BRANCHES } from "@/data/demo-business";
-import { Building2, GitBranch, Shield, Bell, Zap, CreditCard } from "lucide-react";
 
 const SECTIONS = [
-  { id: "business",    label: "Business Profile",   icon: Building2  },
-  { id: "branches",    label: "Branches",           icon: GitBranch  },
-  { id: "permissions", label: "Roles & Permissions",icon: Shield     },
-  { id: "notifications",label: "Notifications",     icon: Bell       },
-  { id: "automation",  label: "Automation",         icon: Zap        },
-  { id: "billing",     label: "Billing & Plan",     icon: CreditCard },
+  { id: "business",      label: "Business Profile"    },
+  { id: "branches",      label: "Branches"            },
+  { id: "permissions",   label: "Roles & Permissions" },
+  { id: "notifications", label: "Notifications"       },
+  { id: "automation",    label: "Automation"          },
+  { id: "billing",       label: "Billing & Plan"      },
 ];
+
+const ROLES = ["Owner","Manager","Cashier","Stock Controller","Purchasing","Accountant","Marketing","Administrator"];
 
 export default function SettingsPage() {
   const [section, setSection] = useState("business");
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="text-xl font-bold text-primary">Settings</h1>
-        <p className="text-sm text-secondary mt-0.5">Business configuration and preferences</p>
-      </div>
-
-      <div className="flex gap-5">
-        <div className="w-48 shrink-0 space-y-0.5">
-          {SECTIONS.map((s) => {
-            const Icon = s.icon;
-            return (
-              <button
-                key={s.id}
-                onClick={() => setSection(s.id)}
-                className={[
-                  "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left",
-                  section === s.id ? "bg-accent-subtle accent" : "text-secondary hover:text-primary hover:bg-page",
-                ].join(" ")}
-              >
-                <Icon size={15} />
-                {s.label}
-              </button>
-            );
-          })}
+    <div className="page">
+      <header className="page-header">
+        <div className="page-header__text">
+          <h1 className="page-header__title">Settings</h1>
+          <p className="page-header__sub">Business configuration and preferences</p>
         </div>
+      </header>
 
-        <div className="flex-1 space-y-4">
+      <div className="settings-layout">
+        <nav className="settings-nav" aria-label="Settings sections">
+          <ul>
+            {SECTIONS.map((s) => (
+              <li key={s.id}>
+                <button onClick={() => setSection(s.id)} aria-current={section === s.id ? "page" : undefined} className={["settings-nav__item", section === s.id ? "settings-nav__item--active" : ""].join(" ").trim()}>
+                  {s.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <div className="settings-content">
           {section === "business" && (
             <Card>
               <CardHeader><CardTitle>Business Profile</CardTitle><Button size="sm">Save Changes</Button></CardHeader>
-              <div className="grid grid-cols-2 gap-4">
+              <form className="settings-form" onSubmit={(e) => e.preventDefault()}>
                 {[
-                  { label: "Business Name",         value: DEMO_BUSINESS.name },
-                  { label: "Trading Name",          value: DEMO_BUSINESS.tradingName ?? "" },
-                  { label: "Registration Number",   value: DEMO_BUSINESS.registrationNumber ?? "" },
-                  { label: "Tax Number (VAT)",      value: DEMO_BUSINESS.taxNumber ?? "" },
-                  { label: "Phone",                 value: DEMO_BUSINESS.contact.phone ?? "" },
-                  { label: "Email",                 value: DEMO_BUSINESS.contact.email ?? "" },
-                  { label: "Website",               value: DEMO_BUSINESS.contact.website ?? "" },
-                  { label: "Timezone",              value: DEMO_BUSINESS.timezone },
+                  { label: "Business Name",       name: "name",               value: DEMO_BUSINESS.name },
+                  { label: "Trading Name",         name: "tradingName",        value: DEMO_BUSINESS.tradingName ?? "" },
+                  { label: "Registration Number",  name: "registrationNumber", value: DEMO_BUSINESS.registrationNumber ?? "" },
+                  { label: "Tax Number (VAT)",     name: "taxNumber",          value: DEMO_BUSINESS.taxNumber ?? "" },
+                  { label: "Phone",                name: "phone",              value: DEMO_BUSINESS.contact.phone ?? "" },
+                  { label: "Email",                name: "email",              value: DEMO_BUSINESS.contact.email ?? "" },
+                  { label: "Website",              name: "website",            value: DEMO_BUSINESS.contact.website ?? "" },
+                  { label: "Timezone",             name: "timezone",           value: DEMO_BUSINESS.timezone },
+                  { label: "Default Tax Rate (%)", name: "taxRate",            value: String(DEMO_BUSINESS.settings.defaultTaxRate) },
+                  { label: "Currency",             name: "currency",           value: DEMO_BUSINESS.currency.code },
+                  { label: "Invoice Prefix",       name: "invoicePrefix",      value: DEMO_BUSINESS.settings.invoicePrefix },
+                  { label: "PO Prefix",            name: "poPrefix",           value: DEMO_BUSINESS.settings.purchaseOrderPrefix },
                 ].map((f) => (
-                  <div key={f.label}>
-                    <label className="block text-xs font-medium text-muted mb-1">{f.label}</label>
-                    <input
-                      defaultValue={f.value}
-                      className="w-full px-3 py-2 text-sm bg-page border border-base rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-                    />
+                  <div key={f.name} className="form-field">
+                    <label htmlFor={f.name}>{f.label}</label>
+                    <input id={f.name} name={f.name} defaultValue={f.value} />
                   </div>
                 ))}
-              </div>
-              <div className="mt-4 pt-4 border-t border-base grid grid-cols-2 gap-4">
-                {[
-                  { label: "Default Tax Rate (%)", value: String(DEMO_BUSINESS.settings.defaultTaxRate) },
-                  { label: "Currency",             value: DEMO_BUSINESS.currency.code },
-                  { label: "Invoice Prefix",       value: DEMO_BUSINESS.settings.invoicePrefix },
-                  { label: "PO Prefix",            value: DEMO_BUSINESS.settings.purchaseOrderPrefix },
-                ].map((f) => (
-                  <div key={f.label}>
-                    <label className="block text-xs font-medium text-muted mb-1">{f.label}</label>
-                    <input defaultValue={f.value} className="w-full px-3 py-2 text-sm bg-page border border-base rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-[var(--accent)]" />
-                  </div>
-                ))}
-              </div>
+              </form>
             </Card>
           )}
 
           {section === "branches" && (
             <Card>
               <CardHeader><CardTitle>Branches</CardTitle><Button size="sm">Add Branch</Button></CardHeader>
-              <div className="space-y-3">
+              <ul className="branch-list">
                 {DEMO_BRANCHES.map((b) => (
-                  <div key={b.id} className="flex items-center justify-between p-4 rounded-lg border border-base hover:bg-page transition-colors">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-primary">{b.name}</p>
-                        {b.isHeadOffice && <Badge variant="default">Head Office</Badge>}
-                        <Badge variant="success">{b.status}</Badge>
-                      </div>
-                      <p className="text-xs text-muted mt-0.5">{b.address.line1}, {b.address.city}</p>
-                      <p className="text-xs text-muted">{b.contact.phone} · {b.contact.email}</p>
+                  <li key={b.id} className="branch-list__item">
+                    <div className="branch-list__body">
+                      <strong>{b.name}</strong>
+                      {b.isHeadOffice && <Badge variant="default">Head Office</Badge>}
+                      <Badge variant="success">{b.status}</Badge>
+                      <p>{b.address.line1}, {b.address.city}</p>
+                      <p>{b.contact.phone} · {b.contact.email}</p>
                     </div>
                     <Button variant="secondary" size="sm">Edit</Button>
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </Card>
           )}
 
           {section === "permissions" && (
             <Card>
-              <CardHeader><CardTitle>Roles & Permissions</CardTitle></CardHeader>
-              <div className="space-y-2">
-                {["Owner","Manager","Cashier","Stock Controller","Purchasing","Accountant","Marketing","Administrator"].map((role) => (
-                  <div key={role} className="flex items-center justify-between px-4 py-3 rounded-lg border border-base hover:bg-page transition-colors">
-                    <div>
-                      <p className="font-medium text-primary text-sm">{role}</p>
-                      <p className="text-xs text-muted">Permission set active</p>
+              <CardHeader><CardTitle>Roles and Permissions</CardTitle></CardHeader>
+              <ul className="role-list">
+                {ROLES.map((role) => (
+                  <li key={role} className="role-list__item">
+                    <div className="role-list__body">
+                      <strong>{role}</strong>
+                      <p>Permission set active</p>
                     </div>
                     <Button variant="ghost" size="sm">Configure</Button>
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </Card>
           )}
 
-          {(section === "notifications" || section === "automation" || section === "billing") && (
+          {["notifications","automation","billing"].includes(section) && (
             <Card>
               <CardHeader><CardTitle>{SECTIONS.find(s => s.id === section)?.label}</CardTitle></CardHeader>
-              <div className="py-8 text-center">
-                <p className="text-sm text-muted">This section will be configured in a later phase.</p>
-              </div>
+              <p className="empty-state">This section will be configured in a later phase.</p>
             </Card>
           )}
         </div>
