@@ -5,12 +5,12 @@ import { Header } from "@/components/layout/Header";
 
 export const metadata: Metadata = {
   title: { default: "NEXUS", template: "%s | NEXUS" },
-  description: "NEXUS by KyleDev Software Systems — Commerce Operating Platform",
+  description: "NEXUS by KyleDev Software Systems — Enterprise Business Operating Platform",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="light">
+    <html lang="en" data-theme="light" suppressHydrationWarning>
       <body>
         <div className="app-shell">
           <Sidebar />
