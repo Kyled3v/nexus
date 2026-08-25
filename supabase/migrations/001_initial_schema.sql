@@ -418,12 +418,12 @@ create table notifications (
 -- UPDATED_AT TRIGGER
 -- ============================================================
 create or replace function update_updated_at()
-returns trigger language plpgsql as _write.py
+returns trigger language plpgsql as ;
 begin
   new.updated_at = now();
   return new;
 end;
-_write.py;
+;;
 
 create trigger update_organisations_updated_at before update on organisations for each row execute function update_updated_at();
 create trigger update_branches_updated_at before update on branches for each row execute function update_updated_at();
