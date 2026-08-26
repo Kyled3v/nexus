@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   const branchId = searchParams.get("branchId") ?? undefined;
 
   try {
-    const inventory = await getInventoryLevels(branchId);
+    const inventory = await getInventoryLevels("demo-business-001", branchId);
     return NextResponse.json({ inventory, source: "live" });
   } catch {
     const report = generateStockIntelligenceReport(DEMO_PRODUCTS, DEMO_BUSINESS.id, DEMO_BRANCHES[0].id);

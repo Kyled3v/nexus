@@ -58,7 +58,7 @@
   .sidebar__footer {
     @apply flex flex-col px-5 py-3 border-t border-zinc-200 gap-0.5 dark:border-zinc-800;
   }
-  .sidebar__footer span { @apply text-xs text-zinc-400; }
+  .sidebar__footer span { @apply text-xs text-zinc-400 leading-relaxed; }
 
   .header {
     @apply flex items-center justify-between px-6 h-13 shrink-0
@@ -468,3 +468,25 @@
   .pos-receipt__actions { @apply flex gap-3 w-full; }
   .pos-receipt__actions .btn { @apply flex-1 justify-center; }
 }
+
+  /* ── Auth shell ── */
+  .auth-shell {
+    @apply min-h-screen bg-zinc-50 flex items-center justify-center p-4
+           dark:bg-zinc-950;
+  }
+  .auth-card {
+    @apply w-full max-w-sm bg-white border border-zinc-200 rounded-2xl p-8 space-y-5
+           dark:bg-zinc-900 dark:border-zinc-800;
+  }
+  .auth-card__brand    { @apply text-center space-y-0.5; }
+  .auth-card__logo     { @apply text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50; }
+  .auth-card__tagline  { @apply text-xs text-zinc-400; }
+  .auth-card__title    { @apply text-base font-semibold text-zinc-900 dark:text-zinc-50; }
+  .auth-card__error    {
+    @apply px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700
+           dark:bg-red-950 dark:border-red-800 dark:text-red-400;
+  }
+  .auth-card__form     { @apply space-y-4; }
+  .auth-card__submit   { @apply w-full justify-center; }
+  .auth-card__footer   { @apply text-center text-sm text-zinc-500 dark:text-zinc-400; }
+  .auth-card__link     { @apply text-brand-600 hover:text-brand-700 font-medium dark:text-brand-400; }

@@ -1,4 +1,6 @@
-import { createClient } from "@/lib/supabase/server";
+import { db } from "@/lib/db";
+import { sales } from "@/lib/db/schema";
+import { eq, gte, lte, and, desc } from "drizzle-orm";
 
 export async function getSales(filters?: {
   branchId?: string;
@@ -8,58 +10,48 @@ export async function getSales(filters?: {
   page?: number;
   pageSize?: number;
 }) {
-  const supabase = await createClient();
   const page = filters?.page ?? 1;
   const pageSize = filters?.pageSize ?? 50;
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
 
-  let query = supabase
-    .from("sales")
-    .select("*, customers(name), sale_items(*)", { count: "exact" })
-    .order("created_at", { ascending: false });
+  const conditions = [];
+  if (filters?.branchId) conditions.push(eq(sales.branchId, filters.branchId));
+  if (filters?.status)   conditions.push(eq(sales.status, filters.status));
 
-  if (filters?.branchId) query = query.eq("branch_id", filters.branchId);
-  if (filters?.status) query = query.eq("status", filters.status);
-  if (filters?.from) query = query.gte("completed_at", filters.from);
-  if (filters?.to) query = query.lte("completed_at", filters.to);
+  const data = await db
+    .select()
+    .from(sales)
+    .where(conditions.length ? and(...conditions) : undefined)
+    .orderBy(desc(sales.createdAt))
+    .limit(pageSize)
+    .offset((page - 1) * pageSize);
 
-  query = query.range(from, to);
-
-  const { data, error, count } = await query;
-  if (error) throw error;
-
-  return {
-    data: data ?? [],
-    total: count ?? 0,
-    page,
-    pageSize,
-    totalPages: Math.ceil((count ?? 0) / pageSize),
-  };
+  return { data, page, pageSize };
 }
 
 export async function getDailySummary(branchId?: string) {
-  const supabase = await createClient();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  let query = supabase
-    .from("sales")
-    .select("total, tax_amount, discount_amount, status")
-    .eq("status", "completed")
-    .gte("completed_at", today.toISOString());
+  const conditions = [
+    eq(sales.status, "completed"),
+    gte(sales.completedAt, today),
+  ];
+  if (branchId) conditions.push(eq(sales.branchId, branchId));
 
-  if (branchId) query = query.eq("branch_id", branchId);
+  const data = await db
+    .select({
+      total:          sales.total,
+      taxAmount:      sales.taxAmount,
+      discountAmount: sales.discountAmount,
+    })
+    .from(sales)
+    .where(and(...conditions));
 
-  const { data, error } = await query;
-  if (error) throw error;
-
-  const sales = data ?? [];
   return {
-    revenue: sales.reduce((s, r) => s + Number(r.total), 0),
-    transactions: sales.length,
-    tax: sales.reduce((s, r) => s + Number(r.tax_amount), 0),
-    discounts: sales.reduce((s, r) => s + Number(r.discount_amount), 0),
-    date: today.toISOString(),
+    revenue:      data.reduce((s, r) => s + Number(r.total),          0),
+    transactions: data.length,
+    tax:          data.reduce((s, r) => s + Number(r.taxAmount),      0),
+    discounts:    data.reduce((s, r) => s + Number(r.discountAmount), 0),
+    date:         today.toISOString(),
   };
 }

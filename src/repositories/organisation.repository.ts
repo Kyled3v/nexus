@@ -1,47 +1,85 @@
-import { createClient } from "@/lib/supabase/server";
+import { db } from "@/lib/db";
+import { organisations, branches, moduleEntitlements, userProfiles } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import type { ModuleEntitlement, ModuleId } from "@/config/modules";
 import { DEV_ENTITLEMENT } from "@/config/modules";
 
-export async function getOrganisation() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+export async function getOrganisationById(id: string) {
+  const [org] = await db
+    .select()
+    .from(organisations)
+    .where(eq(organisations.id, id));
+  return org ?? null;
+}
 
-  const { data: profile, error: profileError } = await supabase
-    .from("user_profiles")
-    .select("organisation_id, role, permissions, branch_id")
-    .eq("id", user.id)
-    .single();
+export async function getOrganisationBranches(organisationId: string) {
+  return db
+    .select()
+    .from(branches)
+    .where(eq(branches.organisationId, organisationId));
+}
 
-  if (profileError || !profile) return null;
+export async function getOrganisationEntitlement(organisationId: string): Promise<ModuleEntitlement> {
+  const [row] = await db
+    .select()
+    .from(moduleEntitlements)
+    .where(eq(moduleEntitlements.organisationId, organisationId));
 
-  const { data: org, error: orgError } = await supabase
-    .from("organisations")
-    .select("*")
-    .eq("id", profile.organisation_id)
-    .single();
+  if (!row) return DEV_ENTITLEMENT;
 
-  if (orgError || !org) return null;
+  const [org] = await db
+    .select({ plan: organisations.plan })
+    .from(organisations)
+    .where(eq(organisations.id, organisationId));
 
-  const { data: entitlementRow } = await supabase
-    .from("module_entitlements")
-    .select("enabled_modules, custom_limits")
-    .eq("organisation_id", profile.organisation_id)
-    .single();
+  return {
+    organisationId,
+    plan: (org?.plan ?? "starter") as ModuleEntitlement["plan"],
+    enabledModules: (row.enabledModules ?? []) as ModuleId[],
+  };
+}
 
-  const entitlement: ModuleEntitlement = entitlementRow
-    ? {
-        organisationId: profile.organisation_id,
-        plan: org.plan,
-        enabledModules: (entitlementRow.enabled_modules as ModuleId[]) ?? [],
-      }
-    : DEV_ENTITLEMENT;
+export async function getUserProfile(userId: string) {
+  const [profile] = await db
+    .select()
+    .from(userProfiles)
+    .where(eq(userProfiles.userId, userId));
+  return profile ?? null;
+}
 
-  const { data: branches } = await supabase
-    .from("branches")
-    .select("*")
-    .eq("organisation_id", profile.organisation_id)
-    .eq("status", "active");
+export async function createOrganisation(data: {
+  name: string;
+  tradingName?: string;
+  slug: string;
+  plan?: string;
+}) {
+  const [org] = await db
+    .insert(organisations)
+    .values(data)
+    .returning();
+  return org;
+}
 
-  return { organisation: org, profile, entitlement, branches: branches ?? [] };
+export async function createUserProfile(data: {
+  userId: string;
+  organisationId: string;
+  role: string;
+}) {
+  const [profile] = await db
+    .insert(userProfiles)
+    .values(data)
+    .returning();
+  return profile;
+}
+
+export async function createDefaultModuleEntitlement(organisationId: string) {
+  const defaultModules = ["inventory", "crm", "reports"];
+  const [entitlement] = await db
+    .insert(moduleEntitlements)
+    .values({
+      organisationId,
+      enabledModules: defaultModules,
+    })
+    .returning();
+  return entitlement;
 }

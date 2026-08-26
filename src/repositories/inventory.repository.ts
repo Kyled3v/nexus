@@ -1,20 +1,28 @@
-import { createClient } from "@/lib/supabase/server";
+import { db } from "@/lib/db";
+import { inventory, products } from "@/lib/db/schema";
+import { eq, and } from "drizzle-orm";
 
-const INVENTORY_SELECT = "*, products(id, sku, name, reorder_level, target_stock, min_stock, max_stock, cost_price, selling_price, status), branches(name)";
+export async function getInventoryLevels(organisationId: string, branchId?: string) {
+  const conditions = [eq(inventory.organisationId, organisationId)];
+  if (branchId) conditions.push(eq(inventory.branchId, branchId));
 
-export async function getInventoryLevels(branchId?: string) {
-  const supabase = await createClient();
-
-  let query = supabase
-    .from("inventory")
-    .select(INVENTORY_SELECT)
-    .order("last_movement_at", { ascending: false });
-
-  if (branchId) query = query.eq("branch_id", branchId);
-
-  const { data, error } = await query;
-  if (error) throw error;
-  return data ?? [];
+  return db
+    .select({
+      id:            inventory.id,
+      productId:     inventory.productId,
+      branchId:      inventory.branchId,
+      currentStock:  inventory.currentStock,
+      reservedStock: inventory.reservedStock,
+      productName:   products.name,
+      productSku:    products.sku,
+      reorderLevel:  products.reorderLevel,
+      targetStock:   products.targetStock,
+      minStock:      products.minStock,
+      maxStock:      products.maxStock,
+    })
+    .from(inventory)
+    .leftJoin(products, eq(inventory.productId, products.id))
+    .where(and(...conditions));
 }
 
 export async function adjustStock(params: {
@@ -22,55 +30,37 @@ export async function adjustStock(params: {
   branchId: string;
   productId: string;
   quantity: number;
-  type: string;
-  notes?: string;
-  createdBy: string;
 }) {
-  const supabase = await createClient();
+  const [existing] = await db
+    .select()
+    .from(inventory)
+    .where(
+      and(
+        eq(inventory.organisationId, params.organisationId),
+        eq(inventory.branchId, params.branchId),
+        eq(inventory.productId, params.productId)
+      )
+    );
 
-  const { data: current, error: fetchError } = await supabase
-    .from("inventory")
-    .select("current_stock, reserved_stock")
-    .eq("organisation_id", params.organisationId)
-    .eq("branch_id", params.branchId)
-    .eq("product_id", params.productId)
-    .single();
+  const currentStock = existing?.currentStock ?? 0;
+  const newStock = currentStock + params.quantity;
 
-  if (fetchError) throw fetchError;
+  if (newStock < 0) throw new Error("Insufficient stock");
 
-  const quantityBefore = current?.current_stock ?? 0;
-  const quantityAfter = quantityBefore + params.quantity;
-
-  if (quantityAfter < 0) throw new Error("Insufficient stock");
-
-  const { error: updateError } = await supabase
-    .from("inventory")
-    .upsert({
-      organisation_id: params.organisationId,
-      branch_id: params.branchId,
-      product_id: params.productId,
-      current_stock: quantityAfter,
-      reserved_stock: current?.reserved_stock ?? 0,
-      last_movement_at: new Date().toISOString(),
+  if (existing) {
+    await db
+      .update(inventory)
+      .set({ currentStock: newStock, lastMovementAt: new Date() })
+      .where(eq(inventory.id, existing.id));
+  } else {
+    await db.insert(inventory).values({
+      organisationId: params.organisationId,
+      branchId:       params.branchId,
+      productId:      params.productId,
+      currentStock:   newStock,
+      reservedStock:  0,
     });
+  }
 
-  if (updateError) throw updateError;
-
-  const { error: movementError } = await supabase
-    .from("inventory_movements")
-    .insert({
-      organisation_id: params.organisationId,
-      branch_id: params.branchId,
-      product_id: params.productId,
-      type: params.type,
-      quantity: params.quantity,
-      quantity_before: quantityBefore,
-      quantity_after: quantityAfter,
-      notes: params.notes,
-      created_by: params.createdBy,
-    });
-
-  if (movementError) throw movementError;
-
-  return { quantityBefore, quantityAfter };
+  return { quantityBefore: currentStock, quantityAfter: newStock };
 }
