@@ -52,6 +52,7 @@ export async function createOrganisation(data: {
   tradingName?: string;
   slug: string;
   plan?: string;
+  logoUrl?: string;
 }) {
   const [org] = await db
     .insert(organisations)

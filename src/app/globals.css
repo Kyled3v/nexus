@@ -489,4 +489,80 @@
   .auth-card__form     { @apply space-y-4; }
   .auth-card__submit   { @apply w-full justify-center; }
   .auth-card__footer   { @apply text-center text-sm text-zinc-500 dark:text-zinc-400; }
-  .auth-card__link     { @apply text-brand-600 hover:text-brand-700 font-medium dark:text-brand-400; }
+  .auth-card__link     { @apply text-brand-600 hover:text-brand-700 font-medium dark:text-brand-400; 
+  /* Auth method toggle */
+  .auth-method-toggle { @apply space-y-2; }
+  .auth-method-toggle__label { @apply text-xs font-medium text-zinc-500; }
+  .auth-method-toggle__options { @apply grid grid-cols-2 gap-2; }
+  .auth-method-option {
+    @apply flex flex-col gap-0.5 p-3 rounded-xl border border-zinc-200 cursor-pointer
+           hover:border-brand-300 hover:bg-brand-50 transition-colors;
+  }
+  .auth-method-option input { @apply sr-only; }
+  .auth-method-option--active { @apply border-brand-400 bg-brand-50; }
+  .auth-method-option__title { @apply text-sm font-medium text-zinc-900; }
+  .auth-method-option__desc  { @apply text-xs text-zinc-400; }
+
+  /* OTP input */
+  .otp-input {
+    @apply text-center text-2xl font-bold tracking-widest font-mono
+           h-14 rounded-xl border-2 border-zinc-200
+           focus:border-brand-500 focus:ring-2 focus:ring-brand-500;
+  }
+
+  /* Remember device */
+  .auth-remember {
+    @apply flex items-center gap-2 text-sm text-zinc-600 cursor-pointer;
+  }
+  .auth-remember input { @apply w-4 h-4 rounded accent-brand-600; }
+
+  /* Setup card */
+  .setup-card {
+    @apply w-full max-w-lg bg-white border border-zinc-200 rounded-2xl p-8 shadow-lg
+           dark:bg-zinc-900 dark:border-zinc-800;
+  }
+  .setup-subtitle { @apply text-sm text-zinc-500 mb-5 -mt-3; }
+  .setup-progress {
+    @apply flex items-center justify-center gap-2 mb-6;
+  }
+  .setup-progress__step {
+    @apply w-8 h-8 rounded-full flex items-center justify-center
+           text-sm font-semibold border-2 border-zinc-200 text-zinc-400;
+  }
+  .setup-progress__step--done {
+    @apply border-brand-500 bg-brand-500 text-white;
+  }
+  .setup-progress__line { @apply flex-1 h-px bg-zinc-200 max-w-16; }
+  .setup-actions { @apply flex gap-3; }
+  .setup-actions .btn { @apply flex-1 justify-center; }
+
+  /* Logo upload */
+  .logo-upload { @apply space-y-3; }
+  .logo-upload__dropzone {
+    @apply flex flex-col items-center gap-2 p-8 rounded-xl border-2 border-dashed
+           border-zinc-200 hover:border-brand-300 hover:bg-brand-50
+           transition-colors cursor-pointer;
+  }
+  .logo-upload__icon  { @apply text-3xl; }
+  .logo-upload__text  { @apply text-sm font-medium text-zinc-700; }
+  .logo-upload__hint  { @apply text-xs text-zinc-400 text-center; }
+  .logo-upload__preview {
+    @apply relative flex flex-col items-center gap-3 p-4 rounded-xl
+           border border-zinc-200 bg-zinc-50;
+  }
+  .logo-upload__preview img { @apply max-h-24 max-w-full object-contain rounded; }
+  .logo-upload__remove {
+    @apply text-xs text-red-500 hover:text-red-700 font-medium transition-colors;
+  }
+
+  /* Form extras */
+  .required { @apply text-red-500 ml-0.5; }
+  .optional  { @apply text-zinc-400 font-normal text-xs; }
+  .form-field select {
+    @apply h-9 px-3 text-sm bg-zinc-50 border border-zinc-200 rounded-lg
+           text-zinc-900 focus:ring-2 focus:ring-brand-500 focus:border-transparent
+           transition-shadow dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-50
+           w-full appearance-none;
+  }
+
+}

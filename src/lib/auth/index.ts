@@ -1,7 +1,9 @@
-﻿import { betterAuth } from "better-auth";
+import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { emailOTP, magicLink } from "better-auth/plugins";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
+import { sendEmail, otpEmailHtml, magicLinkEmailHtml } from "@/lib/email";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -13,28 +15,32 @@ export const auth = betterAuth({
       verification: schema.verification,
     },
   }),
-  emailAndPassword: {
-    enabled: true,
-    requireEmailVerification: false,
-  },
   session: {
-    expiresIn: 60 * 60 * 24 * 7,
-    updateAge: 60 * 60 * 24,
-    cookieCache: {
-      enabled: true,
-      maxAge:  5 * 60,
-    },
+    expiresIn:   60 * 60 * 24 * 30,
+    updateAge:   60 * 60 * 24,
+    cookieCache: { enabled: true, maxAge: 5 * 60 },
   },
-  user: {
-    additionalFields: {
-      activeOrganisationId: {
-        type:     "string",
-        required: false,
+  plugins: [
+    emailOTP({
+      async sendVerificationOTP({ email, otp }: { email: string; otp: string }) {
+        await sendEmail({
+          to:      email,
+          subject: "Your NEXUS sign-in code",
+          html:    otpEmailHtml(otp),
+        });
       },
-    },
-  },
+      otpLength: 6,
+      expiresIn: 600,
+    }),
+    magicLink({
+      async sendMagicLink({ email, url }: { email: string; url: string }) {
+        await sendEmail({
+          to:      email,
+          subject: "Sign in to NEXUS",
+          html:    magicLinkEmailHtml(url),
+        });
+      },
+      expiresIn: 900,
+    }),
+  ],
 });
-
-export type Auth    = typeof auth;
-export type Session = typeof auth.$Infer.Session;
-export type User    = typeof auth.$Infer.Session.user;
