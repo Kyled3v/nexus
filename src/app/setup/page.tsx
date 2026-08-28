@@ -1,12 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "@/lib/auth/client";
 
 export default function SetupPage() {
   const router = useRouter();
-  const { data: session } = useSession();
-  const [step, setStep] = useState(1);
+  const [step,         setStep]         = useState(1);
+  const [checking,     setChecking]     = useState(true);
   const [businessName, setBusinessName] = useState("");
   const [tradingName,  setTradingName]  = useState("");
   const [industry,     setIndustry]     = useState("");
@@ -16,17 +15,24 @@ export default function SetupPage() {
   const [error,        setError]        = useState("");
   const [loading,      setLoading]      = useState(false);
 
+  useEffect(() => {
+    // Check if setup already complete
+    fetch("/api/v1/auth/setup")
+      .then(r => r.json())
+      .then((data: { setupRequired: boolean; alreadySetup?: boolean }) => {
+        if (!data.setupRequired) {
+          router.replace("/");
+        } else {
+          setChecking(false);
+        }
+      })
+      .catch(() => setChecking(false));
+  }, [router]);
+
   function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.includes("png") && !file.type.includes("jpeg") && !file.type.includes("jpg")) {
-      setError("Please upload a PNG or JPG file.");
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      setError("Logo must be under 2MB.");
-      return;
-    }
+    if (file.size > 2 * 1024 * 1024) { setError("Logo must be under 2MB."); return; }
     setLogo(file);
     setLogoPreview(URL.createObjectURL(file));
     setError("");
@@ -34,10 +40,10 @@ export default function SetupPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (step === 1) { setStep(2); return; }
     if (!businessName.trim()) { setError("Business name is required."); return; }
     setError("");
     setLoading(true);
-
     try {
       const formData = new FormData();
       formData.append("businessName", businessName.trim());
@@ -46,14 +52,9 @@ export default function SetupPage() {
       formData.append("taxNumber",    taxNumber.trim());
       if (logo) formData.append("logo", logo);
 
-      const res = await fetch("/api/v1/auth/setup", { method: "POST", body: formData });
+      const res  = await fetch("/api/v1/auth/setup", { method: "POST", body: formData });
       const data = await res.json() as { success?: boolean; error?: string };
-
-      if (!res.ok || !data.success) {
-        setError(data.error ?? "Setup failed. Please try again.");
-        setLoading(false);
-        return;
-      }
+      if (!res.ok || !data.success) { setError(data.error ?? "Setup failed."); setLoading(false); return; }
       router.push("/");
     } catch {
       setError("Something went wrong. Please try again.");
@@ -62,17 +63,20 @@ export default function SetupPage() {
   }
 
   const INDUSTRIES = [
-    "Retail — General",
-    "Retail — Paint & Hardware",
-    "Retail — Food & Grocery",
-    "Wholesale",
-    "Manufacturing",
-    "Services — Professional",
-    "Services — Trade",
-    "Mining & Resources",
-    "Security",
-    "Other",
+    "Retail - General", "Retail - Paint & Hardware", "Retail - Food & Grocery",
+    "Wholesale", "Manufacturing", "Services - Professional", "Services - Trade",
+    "Mining & Resources", "Security", "Other",
   ];
+
+  if (checking) {
+    return (
+      <div className="auth-layout">
+        <div className="auth-card" style={{ textAlign: "center" }}>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-layout">
@@ -88,18 +92,14 @@ export default function SetupPage() {
           <div className={["setup-progress__step", step >= 2 ? "setup-progress__step--done" : ""].join(" ").trim()}>2</div>
         </div>
 
-        <h2 className="auth-card__title">
-          {step === 1 ? "Set up your business" : "Upload your logo"}
-        </h2>
+        <h2 className="auth-card__title">{step === 1 ? "Set up your business" : "Upload your logo"}</h2>
         <p className="setup-subtitle">
-          {step === 1
-            ? "This information appears on invoices, receipts and reports."
-            : "Your logo appears on documents, receipts and the POS interface."}
+          {step === 1 ? "This information appears on invoices, receipts and reports." : "Your logo appears on documents, receipts and the POS interface."}
         </p>
 
         {error && <div className="auth-card__error" role="alert">{error}</div>}
 
-        <form onSubmit={step === 1 ? (e) => { e.preventDefault(); setStep(2); } : handleSubmit} className="auth-card__form">
+        <form onSubmit={handleSubmit} className="auth-card__form">
           {step === 1 && (
             <>
               <div className="form-field">
@@ -113,7 +113,7 @@ export default function SetupPage() {
               <div className="form-field">
                 <label htmlFor="industry">Industry</label>
                 <select id="industry" value={industry} onChange={(e) => setIndustry(e.target.value)}>
-                  <option value="">Select your industry…</option>
+                  <option value="">Select your industry...</option>
                   {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
                 </select>
               </div>
@@ -121,9 +121,7 @@ export default function SetupPage() {
                 <label htmlFor="taxNumber">VAT / Tax Number <span className="optional">(optional)</span></label>
                 <input id="taxNumber" type="text" value={taxNumber} onChange={(e) => setTaxNumber(e.target.value)} placeholder="e.g. 4123456789" />
               </div>
-              <button type="submit" className="btn btn--primary btn--md auth-card__submit">
-                Continue
-              </button>
+              <button type="submit" className="btn btn--primary btn--md auth-card__submit">Continue</button>
             </>
           )}
 
@@ -139,17 +137,16 @@ export default function SetupPage() {
                   <label htmlFor="logo" className="logo-upload__dropzone">
                     <span className="logo-upload__icon">🖼</span>
                     <span className="logo-upload__text">Click to upload your logo</span>
-                    <span className="logo-upload__hint">PNG or JPG, max 2MB. Recommended: 400×200px</span>
+                    <span className="logo-upload__hint">PNG or JPG, max 2MB. Recommended: 400x200px</span>
                     <input id="logo" type="file" accept="image/png,image/jpeg" onChange={handleLogoChange} className="sr-only" />
                   </label>
                 )}
               </div>
-
               <div className="setup-actions">
                 <button type="button" className="btn btn--ghost btn--md" onClick={() => setStep(1)}>Back</button>
                 <button type="submit" className="btn btn--primary btn--md" disabled={loading}>
                   {loading ? <span className="btn__spinner" /> : null}
-                  {loading ? "Setting up…" : logo ? "Finish setup" : "Skip for now"}
+                  {loading ? "Setting up..." : logo ? "Finish setup" : "Skip for now"}
                 </button>
               </div>
             </>
