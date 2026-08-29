@@ -30,6 +30,9 @@ module.exports = {
       spacing: {
         "13": "3.25rem",
       },
+      fontSize: {
+        "2xs": ["0.625rem", { lineHeight: "0.875rem" }],
+      },
     },
   },
   plugins: [],
