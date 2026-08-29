@@ -1,74 +1,47 @@
-﻿# NEXUS Project Status
+# NEXUS Project Status
 
-Last updated: 2026-08-28 23:02
+Last updated: 2026-08-29 09:20
 
 ## Current Phase
 **Phase 1 - Auth + Real Org Context**
-Status: BUILD PASSING - TESTING REQUIRED
+Status: COMPLETE
 
 ## What IS Done
-- [x] Next.js 16 + TypeScript + Tailwind v3 - clean build
-- [x] Drizzle ORM + Neon PostgreSQL - schema pushed, tables live
-- [x] Better Auth - emailOTP + magicLink plugins
-- [x] Nodemailer - Gmail SMTP via authentication@kyledev.site
-- [x] Sign-in page - email then OTP code OR magic link choice
-- [x] Sign-up page - redirects to contact KyleDev (no self-registration)
-- [x] Company setup wizard - business details + logo upload (2 steps)
-- [x] Setup API route /api/v1/auth/setup - creates org + user profile + entitlements
-- [x] All repositories rewritten for Drizzle
-- [x] Supabase fully removed
-- [x] Design system live - brand tokens, dark mode, Inter font
+- [x] Magic link authentication working end-to-end
+- [x] Email delivery via Gmail SMTP (authentication@kyledev.site)
+- [x] Setup wizard - business name, trading name, industry, VAT, logo upload
+- [x] Real org context on dashboard (shows actual business name from DB)
+- [x] AuthGuard server component - unauthenticated users redirect to sign-in
+- [x] Route groups - (auth) and (dashboard) properly separated
+- [x] All routes dynamic and server-rendered
+- [x] Neon PostgreSQL live with full schema
+- [x] Drizzle ORM repositories for all domains
+- [x] Better Auth with magicLink plugin
+- [x] Design system - brand tokens, Tailwind v3, dark mode
 - [x] 26 routes building clean
-- [x] proxy.ts route protection (unauthenticated redirect to /sign-in)
-- [x] Logo upload to /public/uploads/logos/
-- [x] drizzle.config.ts excluded from tsconfig
+- [x] KDOS intelligence panel on dashboard
+- [x] Stock intelligence engine wired to real org ID
 
 ## What Is NOT Done Yet
-- [ ] End-to-end auth flow tested (OTP email delivery not yet verified)
-- [ ] Magic link flow tested
-- [ ] Setup wizard tested (first login experience)
-- [ ] Route protection verified (proxy.ts needs live test)
-- [ ] Real org context wired to session (dashboard still uses demo data)
-- [ ] Trusted device / remember me (30 days)
+- [ ] Real sales/revenue data on dashboard (still shows demo KPIs)
+- [ ] Real product data from DB (pages still use demo-products.ts)
+- [ ] Trusted device / remember me
 - [ ] Multi-business architecture (Phase 2)
 - [ ] Real RBAC enforcement
 - [ ] POS connected to DB
-- [ ] KDOS client (mock only)
+- [ ] Header shows real user name/org
 
-## Next Actions
-1. Start dev server: npm run dev
-2. Go to http://localhost:3000/sign-in
-3. Enter email - verify OTP email arrives at authentication@kyledev.site
-4. Complete setup wizard
-5. Verify dashboard loads with real session
-6. Fix any issues found
-7. Wire session to real org context (replace demo data)
-8. Implement trusted device token
-9. Phase 2: Multi-business architecture
+## Next Actions (Phase 2)
+1. Wire real user name and org name into Header component
+2. Replace demo KPI data with real DB queries
+3. Wire products page to real DB data
+4. Wire inventory page to real DB data
+5. Trusted device implementation
+6. Multi-business support
 
 ## Session Log
-- 2026-08-28 02:29 - 26 routes clean, email OTP + magic link auth complete, nodemailer wired
-- 2026-08-27 21:22 - Auth system built, email templates fixed, sign-up page updated
-- 2026-08-26 23:15 - Better Auth + Drizzle ORM replacing Supabase, 24 routes clean
-- 2026-08-26 22:38 - Repositories rewritten for Drizzle, typecheck clean
-- 2026-08-26 22:00 - Design system live, brand tokens, Tailwind v3
-
-- [2026-08-28 02:36] Pre-build checkpoint
-
-- [2026-08-28 02:38] Pre-build checkpoint
-
-- [2026-08-28 02:45] Pre-build checkpoint
-
-- [2026-08-28 02:54] Pre-build checkpoint
-
-- [2026-08-28 12:58] Pre-build checkpoint
-
-- [2026-08-28 13:04] Pre-build checkpoint
-
-- [2026-08-28 13:27] Pre-build checkpoint
-
-- [2026-08-28 21:09] Pre-build checkpoint
-
-- [2026-08-28 22:38] Pre-build checkpoint
-
-- [2026-08-28 23:02] Pre-build checkpoint
+- 2026-08-29 09:20 - Phase 1 complete: magic link auth, real org context, setup wizard working
+- 2026-08-28 13:27 - AuthGuard, layout restructure, 26 routes dynamic
+- 2026-08-27 21:27 - Better Auth + nodemailer, 26 routes clean
+- 2026-08-27 21:22 - Auth system built, email templates fixed
+- 2026-08-26 23:15 - Better Auth + Drizzle ORM, 24 routes clean

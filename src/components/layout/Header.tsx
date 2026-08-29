@@ -1,60 +1,39 @@
-"use client";
-import { useState } from "react";
-import { currentUser, _devSwitchRole } from "@/lib/auth/dev-context";
-import type { Role } from "@/types/permissions";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
+import { getUserProfile } from "@/repositories/organisation.repository";
+import { getOrganisationById } from "@/repositories/organisation.repository";
+import { HeaderClient } from "./HeaderClient";
 
-const ROLES: Role[] = ["owner","manager","cashier","stock_controller","purchasing","accountant","marketing","administrator"];
+export async function Header() {
+  let userName    = "User";
+  let userRole    = "owner";
+  let orgName     = "NEXUS";
+  let orgLogoUrl  = null as string | null;
 
-export function Header() {
-  const [dark, setDark] = useState(false);
-  const [user, setUser] = useState(currentUser());
-  const [showRoles, setShowRoles] = useState(false);
-
-  function toggleTheme() {
-    const next = !dark;
-    setDark(next);
-    document.documentElement.setAttribute("data-theme", next ? "dark" : "light");
-  }
-
-  function switchRole(role: Role) {
-    _devSwitchRole(role);
-    setUser(currentUser());
-    setShowRoles(false);
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (session?.user) {
+      userName = session.user.name ?? session.user.email ?? "User";
+      const profile = await getUserProfile(session.user.id);
+      if (profile) {
+        userRole = profile.role;
+        const org = await getOrganisationById(profile.organisationId);
+        if (org) {
+          orgName    = org.tradingName ?? org.name;
+          orgLogoUrl = org.logoUrl ?? null;
+        }
+      }
+    }
+  } catch {
+    // fallback to defaults
   }
 
   return (
-    <header className="header">
-      <div className="header__spacer" />
-      <div className="header__actions">
-        <button className="header__theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
-          {dark ? "Light" : "Dark"}
-        </button>
-        <button className="header__notifications" aria-label="Notifications">
-          Notifications
-        </button>
-        <div className="header__dev-role">
-          <button className="header__dev-role-trigger" onClick={() => setShowRoles(!showRoles)}>
-            <span className="header__dev-indicator" aria-label="Dev mode" />
-            {user.name}
-            <span className="header__dev-role-label">[{user.role.replace("_", " ")}]</span>
-          </button>
-          {showRoles && (
-            <ul className="header__dev-role-menu" role="menu">
-              <li className="header__dev-role-heading">Dev: Switch Role</li>
-              {ROLES.map((role) => (
-                <li key={role} role="menuitem">
-                  <button
-                    onClick={() => switchRole(role)}
-                    aria-current={user.role === role ? "true" : undefined}
-                  >
-                    {role.replace("_", " ").replace(/\w/g, (c) => c.toUpperCase())}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
-    </header>
+    <HeaderClient
+      userName={userName}
+      userRole={userRole}
+      orgName={orgName}
+      orgLogoUrl={orgLogoUrl}
+    />
   );
 }
