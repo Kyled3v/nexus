@@ -1,51 +1,48 @@
 ﻿# NEXUS Project Status
 
-Last updated: 2026-08-29 15:30
+Last updated: 2026-08-30 01:33
 
 ## Current Phase
-**Phase 1 - Auth + Real Org Context**
-Status: COMPLETE
+**Phase 2 - Real Data + Multi-Business**
+Status: BUILD PASSING - TESTING REQUIRED
 
 ## What IS Done
-- [x] Magic link authentication working end-to-end
-- [x] Email delivery via Gmail SMTP (authentication@kyledev.site)
-- [x] Setup wizard - business name, trading name, industry, VAT, logo upload
-- [x] Real org context on dashboard (shows actual business name from DB)
-- [x] AuthGuard server component - unauthenticated users redirect to sign-in
-- [x] Route groups - (auth) and (dashboard) properly separated
-- [x] All routes dynamic and server-rendered
-- [x] Neon PostgreSQL live with full schema
-- [x] Drizzle ORM repositories for all domains
-- [x] Better Auth with magicLink plugin
-- [x] Design system - brand tokens, Tailwind v3, dark mode
+- [x] Phase 1 complete: magic link auth, setup wizard, real org context
+- [x] Real user name and org name in Header (server component)
+- [x] Header user menu with sign out
+- [x] Org logo shown in header if uploaded
+- [x] Products page fetches from API with demo fallback
+- [x] Trusted device implementation (30 day cookie)
+- [x] Multi-org schema: user_organisation_memberships + user_active_organisation
+- [x] Multi-org repository: getUserOrganisations, setActiveOrganisation
+- [x] Multi-org tables pushed to Neon
+- [x] 2xs font size added to Tailwind config
 - [x] 26 routes building clean
-- [x] KDOS intelligence panel on dashboard
-- [x] Stock intelligence engine wired to real org ID
 
 ## What Is NOT Done Yet
-- [ ] Real sales/revenue data on dashboard (still shows demo KPIs)
-- [ ] Real product data from DB (pages still use demo-products.ts)
-- [ ] Trusted device / remember me
-- [ ] Multi-business architecture (Phase 2)
-- [ ] Real RBAC enforcement
+- [ ] Business switcher UI in sidebar/header
+- [ ] Real sales/revenue KPIs on dashboard
+- [ ] Real inventory data from DB
+- [ ] Real customers from DB
 - [ ] POS connected to DB
-- [ ] Header shows real user name/org
+- [ ] RBAC enforcement
+- [ ] Email verified before dashboard access
 
-## Next Actions (Phase 2)
-1. Wire real user name and org name into Header component
-2. Replace demo KPI data with real DB queries
-3. Wire products page to real DB data
-4. Wire inventory page to real DB data
-5. Trusted device implementation
-6. Multi-business support
+## Next Actions
+1. Test Header shows real name after sign in
+2. Build business switcher UI
+3. Wire dashboard KPIs to real DB data
+4. Wire inventory/customers pages to real DB
+5. POS to DB connection
 
 ## Session Log
-- 2026-08-29 09:20 - Phase 1 complete: magic link auth, real org context, setup wizard working
-- 2026-08-28 13:27 - AuthGuard, layout restructure, 26 routes dynamic
+- 2026-08-29 15:38 - Phase 2: real header, multi-org schema, trusted device, products API
+- 2026-08-28 13:27 - Phase 1 complete: magic link, setup wizard, org context
 - 2026-08-27 21:27 - Better Auth + nodemailer, 26 routes clean
-- 2026-08-27 21:22 - Auth system built, email templates fixed
 - 2026-08-26 23:15 - Better Auth + Drizzle ORM, 24 routes clean
 
-- [2026-08-29 15:22] Pre-build checkpoint
+- [2026-08-29 16:22] Pre-build checkpoint
 
-- [2026-08-29 15:30] Pre-build checkpoint
+- [2026-08-30 01:24] Pre-build checkpoint
+
+- [2026-08-30 01:33] Pre-build checkpoint

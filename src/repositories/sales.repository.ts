@@ -1,26 +1,24 @@
-import { db } from "@/lib/db";
+﻿import { db } from "@/lib/db";
 import { sales } from "@/lib/db/schema";
-import { eq, gte, lte, and, desc } from "drizzle-orm";
+import { eq, gte, and, desc } from "drizzle-orm";
 
-export async function getSales(filters?: {
+export async function getSales(organisationId: string, filters?: {
   branchId?: string;
-  status?: string;
-  from?: string;
-  to?: string;
-  page?: number;
+  status?:   string;
+  page?:     number;
   pageSize?: number;
 }) {
-  const page = filters?.page ?? 1;
+  const page     = filters?.page     ?? 1;
   const pageSize = filters?.pageSize ?? 50;
+  const conditions = [eq(sales.organisationId, organisationId)];
 
-  const conditions = [];
   if (filters?.branchId) conditions.push(eq(sales.branchId, filters.branchId));
-  if (filters?.status)   conditions.push(eq(sales.status, filters.status));
+  if (filters?.status)   conditions.push(eq(sales.status,   filters.status));
 
   const data = await db
     .select()
     .from(sales)
-    .where(conditions.length ? and(...conditions) : undefined)
+    .where(and(...conditions))
     .orderBy(desc(sales.createdAt))
     .limit(pageSize)
     .offset((page - 1) * pageSize);
@@ -28,11 +26,12 @@ export async function getSales(filters?: {
   return { data, page, pageSize };
 }
 
-export async function getDailySummary(branchId?: string) {
+export async function getDailySummary(organisationId: string, branchId?: string) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   const conditions = [
+    eq(sales.organisationId, organisationId),
     eq(sales.status, "completed"),
     gte(sales.completedAt, today),
   ];
@@ -54,4 +53,23 @@ export async function getDailySummary(branchId?: string) {
     discounts:    data.reduce((s, r) => s + Number(r.discountAmount), 0),
     date:         today.toISOString(),
   };
+}
+
+export async function getMonthlyRevenue(organisationId: string) {
+  const start = new Date();
+  start.setDate(1);
+  start.setHours(0, 0, 0, 0);
+
+  const data = await db
+    .select({ total: sales.total })
+    .from(sales)
+    .where(
+      and(
+        eq(sales.organisationId, organisationId),
+        eq(sales.status, "completed"),
+        gte(sales.completedAt, start),
+      )
+    );
+
+  return data.reduce((s, r) => s + Number(r.total), 0);
 }

@@ -1,4 +1,4 @@
-import { headers } from "next/headers";
+﻿import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { getUserProfile, getOrganisationById, getOrganisationBranches, getOrganisationEntitlement } from "@/repositories/organisation.repository";
 import { DEV_ENTITLEMENT } from "@/config/modules";
@@ -57,3 +57,4 @@ export async function getOrgContext(): Promise<OrgContext | null> {
     return null;
   }
 }
+
