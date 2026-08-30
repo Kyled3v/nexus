@@ -1,5 +1,5 @@
 ﻿import { db } from "@/lib/db";
-import { sales } from "@/lib/db/schema";
+import { sales, saleItems } from "@/lib/db/schema";
 import { eq, gte, and, desc } from "drizzle-orm";
 
 export async function getSales(organisationId: string, filters?: {
@@ -73,3 +73,69 @@ export async function getMonthlyRevenue(organisationId: string) {
 
   return data.reduce((s, r) => s + Number(r.total), 0);
 }
+
+export async function createSale(params: {
+  organisationId: string;
+  branchId:       string;
+  cashierId:      string;
+  items: {
+    productId?:     string;
+    sku:            string;
+    name:           string;
+    quantity:       number;
+    unitPrice:      number;
+    taxRate:        number;
+    taxAmount:      number;
+    discountPct:    number;
+    discountAmount: number;
+    lineTotal:      number;
+  }[];
+  subtotal:       number;
+  taxAmount:      number;
+  discountAmount: number;
+  total:          number;
+  paymentMethod:  string;
+  customerId?:    string;
+}) {
+  const saleNumber = "S-" + Date.now().toString(36).toUpperCase();
+
+  const [sale] = await db
+    .insert(sales)
+    .values({
+      organisationId: params.organisationId,
+      branchId:       params.branchId,
+      tillId:         "TILL-01",
+      saleNumber,
+      cashierId:      params.cashierId,
+      customerId:     params.customerId,
+      status:         "completed",
+      subtotal:       String(params.subtotal),
+      taxAmount:      String(params.taxAmount),
+      discountAmount: String(params.discountAmount),
+      total:          String(params.total),
+      completedAt:    new Date(),
+    })
+    .returning();
+
+  if (params.items.length > 0) {
+    await db.insert(saleItems).values(
+      params.items.map(item => ({
+        saleId:         sale.id,
+        organisationId: params.organisationId,
+        productId:      item.productId,
+        sku:            item.sku,
+        name:           item.name,
+        quantity:       item.quantity,
+        unitPrice:      String(item.unitPrice),
+        taxRate:        String(item.taxRate),
+        taxAmount:      String(item.taxAmount),
+        discountPct:    String(item.discountPct),
+        discountAmount: String(item.discountAmount),
+        lineTotal:      String(item.lineTotal),
+      }))
+    );
+  }
+
+  return sale;
+}
+

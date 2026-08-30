@@ -1,4 +1,4 @@
-import {
+﻿import {
   pgTable, uuid, text, boolean, integer,
   numeric, timestamp, jsonb, uniqueIndex, index,
 } from "drizzle-orm/pg-core";
@@ -297,4 +297,30 @@ export const inventoryRelations = relations(inventory, ({ one }) => ({
 
 export const customersRelations = relations(customers, ({ one }) => ({
   organisation: one(organisations, { fields: [customers.organisationId], references: [organisations.id] }),
+}));
+
+// ============================================================
+// SALE ITEMS
+// ============================================================
+export const saleItems = pgTable("sale_items", {
+  id:             uuid("id").primaryKey().defaultRandom(),
+  saleId:         uuid("sale_id").notNull().references(() => sales.id, { onDelete: "cascade" }),
+  organisationId: uuid("organisation_id").notNull().references(() => organisations.id, { onDelete: "cascade" }),
+  productId:      uuid("product_id").references(() => products.id),
+  sku:            text("sku").notNull(),
+  name:           text("name").notNull(),
+  quantity:       integer("quantity").notNull().default(1),
+  unitPrice:      numeric("unit_price",       { precision: 12, scale: 2 }).notNull().default("0"),
+  taxRate:        numeric("tax_rate",         { precision: 5,  scale: 2 }).notNull().default("15"),
+  taxAmount:      numeric("tax_amount",       { precision: 12, scale: 2 }).notNull().default("0"),
+  discountPct:    numeric("discount_pct",     { precision: 5,  scale: 2 }).notNull().default("0"),
+  discountAmount: numeric("discount_amount",  { precision: 12, scale: 2 }).notNull().default("0"),
+  lineTotal:      numeric("line_total",       { precision: 12, scale: 2 }).notNull().default("0"),
+  ...timestamps,
+});
+
+export const saleItemsRelations = relations(saleItems, ({ one }) => ({
+  sale:         one(sales,         { fields: [saleItems.saleId],         references: [sales.id] }),
+  organisation: one(organisations, { fields: [saleItems.organisationId], references: [organisations.id] }),
+  product:      one(products,      { fields: [saleItems.productId],      references: [products.id] }),
 }));

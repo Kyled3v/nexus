@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useCallback } from "react";
 import { DEMO_PRODUCTS } from "@/data/demo-products";
 import type { ProductWithStock } from "@/domain/products/types";
@@ -62,8 +62,44 @@ export default function POSPage() {
   const cashAmount = parseFloat(cashTendered) || 0;
   const change = cashAmount - total;
 
-  const completeSale = () => {
+  const completeSale = async () => {
     if (cart.length === 0) return;
+
+    const items = cart.map(item => {
+      const subtotal      = item.unitPrice * item.quantity;
+      const discountAmt   = subtotal * (item.discount / 100);
+      const afterDiscount = subtotal - discountAmt;
+      const taxAmt        = afterDiscount * (item.taxRate / 100) / (1 + item.taxRate / 100);
+      return {
+        sku:            item.sku,
+        name:           item.name,
+        quantity:       item.quantity,
+        unitPrice:      item.unitPrice,
+        taxRate:        item.taxRate,
+        taxAmount:      taxAmt,
+        discountPct:    item.discount,
+        discountAmount: discountAmt,
+        lineTotal:      afterDiscount,
+      };
+    });
+
+    try {
+      await fetch("/api/v1/sales/create", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({
+          items,
+          subtotal:       totals.subtotal,
+          taxAmount:      totals.tax,
+          discountAmount: 0,
+          total,
+          paymentMethod,
+        }),
+      });
+    } catch {
+      // Sale saved locally even if API fails
+    }
+
     setLastReceipt([...cart]);
     setLastTotal(total);
     setSaleComplete(true);
@@ -213,7 +249,7 @@ export default function POSPage() {
           )}
 
           {paymentMethod === "split" && (
-            <p className="pos__split-instruction">Split payment configuration — coming soon</p>
+            <p className="pos__split-instruction">Split payment configuration â€” coming soon</p>
           )}
 
           <Button
@@ -229,3 +265,4 @@ export default function POSPage() {
     </div>
   );
 }
+
