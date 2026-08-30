@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import {
@@ -6,6 +6,7 @@ import {
   createUserProfile,
   createDefaultModuleEntitlement,
   getUserProfile,
+  createBranch,
 } from "@/repositories/organisation.repository";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
@@ -106,6 +107,13 @@ export async function POST(request: Request) {
 
     await createDefaultModuleEntitlement(org.id);
 
+    await createBranch({
+      organisationId: org.id,
+      name:           businessName + " - Main Branch",
+      code:           "MAIN",
+      isHeadOffice:   true,
+    });
+
     const response = NextResponse.json({ success: true, organisationId: org.id });
     response.cookies.set("nexus_org_setup", org.id, {
       httpOnly: true,
@@ -118,3 +126,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Setup failed" }, { status: 500 });
   }
 }
+
+
+
+
+
+
+
+

@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+﻿import { db } from "@/lib/db";
 import { organisations, branches, moduleEntitlements, userProfiles } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import type { ModuleEntitlement, ModuleId } from "@/config/modules";
@@ -83,4 +83,22 @@ export async function createDefaultModuleEntitlement(organisationId: string) {
     })
     .returning();
   return entitlement;
+}
+
+export async function createBranch(data: {
+  organisationId: string;
+  name:           string;
+  code:           string;
+  isHeadOffice?:  boolean;
+}) {
+  const [branch] = await db
+    .insert(branches)
+    .values({
+      organisationId: data.organisationId,
+      name:           data.name,
+      code:           data.code,
+      isHeadOffice:   data.isHeadOffice ?? true,
+    })
+    .returning();
+  return branch;
 }
