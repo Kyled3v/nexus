@@ -1,69 +1,114 @@
 ﻿"use client";
-import { useState, useCallback } from "react";
-import { DEMO_PRODUCTS } from "@/data/demo-products";
-import type { ProductWithStock } from "@/domain/products/types";
+import { useState, useEffect, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+interface PosProduct {
+  id:             string;
+  sku:            string;
+  barcode?:       string | null;
+  name:           string;
+  sellingPrice:   number;
+  taxRate:        number;
+  taxInclusive:   boolean;
+  currentStock:   number;
+  reservedStock:  number;
+  availableStock: number;
+}
+
 interface CartItem {
-  productId: string; sku: string; name: string;
-  unitPrice: number; taxRate: number; quantity: number; discount: number;
+  productId:  string;
+  sku:        string;
+  name:       string;
+  unitPrice:  number;
+  taxRate:    number;
+  quantity:   number;
+  discount:   number;
 }
 
 type PaymentMethod = "cash" | "card" | "split";
 
 function calcItem(item: CartItem) {
-  const subtotal = item.unitPrice * item.quantity;
-  const discountAmt = subtotal * (item.discount / 100);
+  const subtotal      = item.unitPrice * item.quantity;
+  const discountAmt   = subtotal * (item.discount / 100);
   const afterDiscount = subtotal - discountAmt;
-  const taxAmt = afterDiscount * (item.taxRate / 100) / (1 + item.taxRate / 100);
+  const taxAmt        = afterDiscount * (item.taxRate / 100) / (1 + item.taxRate / 100);
   return { subtotal, discountAmt, afterDiscount, taxAmt };
 }
 
 export default function POSPage() {
-  const [search, setSearch] = useState("");
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
-  const [cashTendered, setCashTendered] = useState("");
-  const [customerName, setCustomerName] = useState("");
-  const [saleComplete, setSaleComplete] = useState(false);
-  const [lastReceipt, setLastReceipt] = useState<CartItem[]>([]);
-  const [lastTotal, setLastTotal] = useState(0);
+  const [products,       setProducts]       = useState<PosProduct[]>([]);
+  const [source,         setSource]         = useState<string>("loading");
+  const [search,         setSearch]         = useState("");
+  const [cart,           setCart]           = useState<CartItem[]>([]);
+  const [paymentMethod,  setPaymentMethod]  = useState<PaymentMethod>("cash");
+  const [cashTendered,   setCashTendered]   = useState("");
+  const [customerName,   setCustomerName]   = useState("");
+  const [saleComplete,   setSaleComplete]   = useState(false);
+  const [lastReceipt,    setLastReceipt]    = useState<CartItem[]>([]);
+  const [lastTotal,      setLastTotal]      = useState(0);
+  const [submitting,     setSubmitting]     = useState(false);
 
-  const filtered = DEMO_PRODUCTS.filter(p =>
-    p.status === "active" && (
-      search.length === 0 ||
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.sku.toLowerCase().includes(search.toLowerCase()) ||
-      (p.barcode ?? "").includes(search)
-    )
-  ).slice(0, 16);
+  useEffect(() => {
+    fetch("/api/v1/pos")
+      .then(r => r.json())
+      .then((data: { products?: PosProduct[]; source?: string }) => {
+        if (data.products) {
+          setProducts(data.products);
+          setSource(data.source ?? "live");
+        }
+      })
+      .catch(() => setSource("error"));
+  }, []);
 
-  const addToCart = useCallback((product: ProductWithStock) => {
+  useEffect(() => {
+    if (search.length === 0) return;
+    const t = setTimeout(() => {
+      fetch("/api/v1/pos?search=" + encodeURIComponent(search))
+        .then(r => r.json())
+        .then((data: { products?: PosProduct[] }) => {
+          if (data.products) setProducts(data.products);
+        })
+        .catch(() => {});
+    }, 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const filtered = products.slice(0, 16);
+
+  const addToCart = useCallback((product: PosProduct) => {
     if (product.availableStock <= 0) return;
     setCart(prev => {
       const existing = prev.find(i => i.productId === product.id);
       if (existing) return prev.map(i => i.productId === product.id ? { ...i, quantity: i.quantity + 1 } : i);
-      return [...prev, { productId: product.id, sku: product.sku, name: product.name, unitPrice: product.sellingPrice, taxRate: product.taxRate, quantity: 1, discount: 0 }];
+      return [...prev, {
+        productId: product.id,
+        sku:       product.sku,
+        name:      product.name,
+        unitPrice: product.sellingPrice,
+        taxRate:   product.taxRate,
+        quantity:  1,
+        discount:  0,
+      }];
     });
   }, []);
 
-  const updateQty = (productId: string, delta: number) =>
+  const updateQty   = (productId: string, delta: number) =>
     setCart(prev => prev.map(i => i.productId === productId ? { ...i, quantity: Math.max(1, i.quantity + delta) } : i));
-
-  const removeItem = (productId: string) => setCart(prev => prev.filter(i => i.productId !== productId));
+  const removeItem  = (productId: string) => setCart(prev => prev.filter(i => i.productId !== productId));
 
   const totals = cart.reduce((acc, item) => {
     const { afterDiscount, taxAmt } = calcItem(item);
     return { subtotal: acc.subtotal + afterDiscount, tax: acc.tax + taxAmt, items: acc.items + item.quantity };
   }, { subtotal: 0, tax: 0, items: 0 });
 
-  const total = totals.subtotal;
-  const cashAmount = parseFloat(cashTendered) || 0;
-  const change = cashAmount - total;
+  const total       = totals.subtotal;
+  const cashAmount  = parseFloat(cashTendered) || 0;
+  const change      = cashAmount - total;
 
   const completeSale = async () => {
-    if (cart.length === 0) return;
+    if (cart.length === 0 || submitting) return;
+    setSubmitting(true);
 
     const items = cart.map(item => {
       const subtotal      = item.unitPrice * item.quantity;
@@ -71,6 +116,7 @@ export default function POSPage() {
       const afterDiscount = subtotal - discountAmt;
       const taxAmt        = afterDiscount * (item.taxRate / 100) / (1 + item.taxRate / 100);
       return {
+        productId:      item.productId,
         sku:            item.sku,
         name:           item.name,
         quantity:       item.quantity,
@@ -97,7 +143,7 @@ export default function POSPage() {
         }),
       });
     } catch {
-      // Sale saved locally even if API fails
+      // continue to receipt even if save fails
     }
 
     setLastReceipt([...cart]);
@@ -107,6 +153,7 @@ export default function POSPage() {
     setSearch("");
     setCustomerName("");
     setCashTendered("");
+    setSubmitting(false);
   };
 
   if (saleComplete) {
@@ -114,7 +161,9 @@ export default function POSPage() {
       <div className="pos-receipt">
         <h2>Sale Complete</h2>
         <p className="pos-receipt__total">R {lastTotal.toFixed(2)}</p>
-        {paymentMethod === "cash" && change >= 0 && <p className="pos-receipt__change">Change: R {change.toFixed(2)}</p>}
+        {paymentMethod === "cash" && change >= 0 && (
+          <p className="pos-receipt__change">Change: R {change.toFixed(2)}</p>
+        )}
         <table className="pos-receipt__items">
           <tbody>
             {lastReceipt.map(item => (
@@ -136,7 +185,6 @@ export default function POSPage() {
 
   return (
     <div className="pos">
-
       <section className="pos__products" aria-label="Product selection">
         <div className="pos__search">
           <input
@@ -150,12 +198,17 @@ export default function POSPage() {
           <div className="pos__terminal-info">
             <span className="pos__terminal-status" data-status="active" aria-label="Till active" />
             <span>Till 01 &middot; Main Branch</span>
+            {source === "empty" && <Badge variant="warning">No products in DB</Badge>}
+            {source === "loading" && <Badge variant="muted">Loading...</Badge>}
           </div>
         </div>
 
         <ul className="pos__product-grid">
+          {filtered.length === 0 && source !== "loading" && (
+            <li className="empty-state">No products found. Add products to your inventory first.</li>
+          )}
           {filtered.map((product) => {
-            const inCart = cart.find(i => i.productId === product.id);
+            const inCart     = cart.find(i => i.productId === product.id);
             const outOfStock = product.availableStock <= 0;
             return (
               <li key={product.id}>
@@ -169,7 +222,7 @@ export default function POSPage() {
                   <code className="pos__product-sku">{product.sku}</code>
                   <span className="pos__product-name">{product.name}</span>
                   <span className="pos__product-price">R {product.sellingPrice.toFixed(2)}</span>
-                  <span className="pos__product-stock" data-stock-level={product.stockStatus}>
+                  <span className="pos__product-stock" data-stock-level={outOfStock ? "out" : "ok"}>
                     {outOfStock ? "Out of stock" : product.availableStock + " in stock"}
                   </span>
                   {inCart && <span className="pos__product-qty-badge" aria-label={"In cart: " + inCart.quantity}>{inCart.quantity}</span>}
@@ -191,7 +244,6 @@ export default function POSPage() {
             <h2>Cart {cart.length > 0 && <Badge variant="default">{totals.items}</Badge>}</h2>
             {cart.length > 0 && <button onClick={() => setCart([])} aria-label="Clear cart">Clear</button>}
           </header>
-
           {cart.length === 0 ? (
             <p className="empty-state">Cart is empty</p>
           ) : (
@@ -249,20 +301,19 @@ export default function POSPage() {
           )}
 
           {paymentMethod === "split" && (
-            <p className="pos__split-instruction">Split payment configuration â€” coming soon</p>
+            <p className="pos__split-instruction">Split payment — coming soon</p>
           )}
 
           <Button
             className="pos__complete-btn"
             size="lg"
-            disabled={cart.length === 0}
+            disabled={cart.length === 0 || submitting}
             onClick={completeSale}
           >
-            Complete Sale &middot; R {total.toFixed(2)}
+            {submitting ? "Processing..." : "Complete Sale · R " + total.toFixed(2)}
           </Button>
         </section>
       </aside>
     </div>
   );
 }
-

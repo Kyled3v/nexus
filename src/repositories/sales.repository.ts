@@ -1,6 +1,6 @@
 ﻿import { db } from "@/lib/db";
-import { sales, saleItems } from "@/lib/db/schema";
-import { eq, gte, and, desc } from "drizzle-orm";
+import { sales, saleItems, inventory } from "@/lib/db/schema";
+import { eq, gte, and, desc, sql } from "drizzle-orm";
 
 export async function getSales(organisationId: string, filters?: {
   branchId?: string;
@@ -138,4 +138,30 @@ export async function createSale(params: {
 
   return sale;
 }
+
+export async function decrementStockForSale(params: {
+  organisationId: string;
+  branchId:       string;
+  items: { productId?: string; quantity: number }[];
+}) {
+  for (const item of params.items) {
+    if (!item.productId) continue;
+    await db
+      .update(inventory)
+      .set({
+        currentStock:   sql`GREATEST(0, ${inventory.currentStock} - ${item.quantity})`,
+        lastMovementAt: new Date(),
+      })
+      .where(
+        and(
+          eq(inventory.organisationId, params.organisationId),
+          eq(inventory.branchId,       params.branchId),
+          eq(inventory.productId,      item.productId),
+        )
+      );
+  }
+}
+
+
+
 
