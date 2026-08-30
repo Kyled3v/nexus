@@ -1,12 +1,15 @@
 ﻿import { NextResponse } from "next/server";
 import { getOrgContext } from "@/lib/org/context";
 import { getInventoryLevels } from "@/repositories/inventory.repository";
+import { hasPermission } from "@/lib/auth/permissions";
 import { DEMO_PRODUCTS } from "@/data/demo-products";
 import { generateStockIntelligenceReport } from "@/services/automation/stock-intelligence";
 
 export async function GET(request: Request) {
   const ctx = await getOrgContext();
   if (!ctx) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+
+  if (!hasPermission(ctx, "stock.view")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { searchParams } = new URL(request.url);
   const branchId = searchParams.get("branchId") ?? undefined;
@@ -33,3 +36,5 @@ export async function GET(request: Request) {
     });
   }
 }
+
+

@@ -1,6 +1,7 @@
 ﻿import { NextResponse } from "next/server";
 import { getOrgContext } from "@/lib/org/context";
 import { getCustomers, createCustomer } from "@/repositories/customers.repository";
+import { hasPermission } from "@/lib/auth/permissions";
 import { CreateCustomerSchema } from "@/lib/validation/schemas";
 
 export async function GET(request: Request) {
@@ -21,6 +22,8 @@ export async function POST(request: Request) {
   const ctx = await getOrgContext();
   if (!ctx) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
+  if (!hasPermission(ctx, "customer.manage")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
   const body   = await request.json();
   const parsed = CreateCustomerSchema.safeParse(body);
   if (!parsed.success) {
@@ -30,3 +33,5 @@ export async function POST(request: Request) {
   const customer = await createCustomer(ctx.organisationId, parsed.data);
   return NextResponse.json(customer, { status: 201 });
 }
+
+
