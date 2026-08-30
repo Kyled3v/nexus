@@ -1,16 +1,16 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
+import { getOrgContext } from "@/lib/org/context";
 import { KdosClient } from "@/services/ai/kdos-client";
-import { DEMO_BUSINESS, DEMO_BRANCHES } from "@/data/demo-business";
 
-// GET /api/v1/kdos/recommendations
-// Returns KDOS intelligence recommendations for the current organisation.
-// In production: authenticated, rate-limited, cached.
 export async function GET() {
+  const ctx = await getOrgContext();
+  if (!ctx) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+
   const context = {
-    businessId: DEMO_BUSINESS.id,
-    branchId: DEMO_BRANCHES[0].id,
-    period: "day" as const,
-    data: {},
+    businessId: ctx.organisationId,
+    branchId:   ctx.branches[0]?.id ?? "main",
+    period:     "day" as const,
+    data:       {},
   };
 
   const [recommendations, risks] = await Promise.all([

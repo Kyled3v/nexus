@@ -1,13 +1,20 @@
-import { NextResponse } from "next/server";
-import { getOrganisationById, getOrganisationBranches, getOrganisationEntitlement } from "@/repositories/organisation.repository";
-import { DEMO_BUSINESS, DEMO_BRANCHES } from "@/data/demo-business";
-import { DEV_ENTITLEMENT } from "@/config/modules";
+﻿import { NextResponse } from "next/server";
+import { getOrgContext } from "@/lib/org/context";
 
 export async function GET() {
+  const ctx = await getOrgContext();
+  if (!ctx) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+
   return NextResponse.json({
-    organisation: DEMO_BUSINESS,
-    branches: DEMO_BRANCHES,
-    entitlement: DEV_ENTITLEMENT,
-    source: "demo",
+    organisation: {
+      id:          ctx.organisationId,
+      name:        ctx.orgName,
+      tradingName: ctx.orgTradingName,
+      logoUrl:     ctx.orgLogoUrl,
+      plan:        ctx.orgPlan,
+    },
+    branches:    ctx.branches,
+    entitlement: ctx.entitlement,
+    source:      "live",
   });
 }
