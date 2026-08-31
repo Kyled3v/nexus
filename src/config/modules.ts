@@ -163,11 +163,11 @@ export function getEnabledModules(entitlement: ModuleEntitlement): NexusModule[]
 }
 
 export function canEnableModule(entitlement: ModuleEntitlement, moduleId: ModuleId): boolean {
-  const module = NEXUS_MODULES[moduleId];
-  if (!module) return false;
-  if (!module.plans.includes(entitlement.plan)) return false;
-  if (module.requiredModules) {
-    return module.requiredModules.every(dep => entitlement.enabledModules.includes(dep));
+  const mod = NEXUS_MODULES[moduleId];
+  if (!mod) return false;
+  if (!mod.plans.includes(entitlement.plan)) return false;
+  if (mod.requiredModules) {
+    return mod.requiredModules.every(dep => entitlement.enabledModules.includes(dep));
   }
   return true;
 }

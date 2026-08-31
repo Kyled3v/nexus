@@ -24,26 +24,24 @@ interface InventoryItem {
   targetStock?: number;
 }
 
+const INITIAL_ITEMS: InventoryItem[] = DEMO_PRODUCTS.map(p => ({
+  productId:    p.id,
+  sku:          p.sku,
+  name:         p.name,
+  currentStock: p.currentStock,
+  reservedStock:p.reservedStock,
+  stockStatus:  p.stockStatus,
+  reorderLevel: p.reorderLevel,
+  targetStock:  p.targetStock,
+}));
+
 export default function InventoryPage() {
-  const [items,  setItems]  = useState<InventoryItem[]>([]);
+  const [items,  setItems]  = useState<InventoryItem[]>(INITIAL_ITEMS);
   const [source, setSource] = useState("demo");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
 
   useEffect(() => {
-    // Use demo data initially
-    const demoItems: InventoryItem[] = DEMO_PRODUCTS.map(p => ({
-      productId:    p.id,
-      sku:          p.sku,
-      name:         p.name,
-      currentStock: p.currentStock,
-      reservedStock:p.reservedStock,
-      stockStatus:  p.stockStatus,
-      reorderLevel: p.reorderLevel,
-      targetStock:  p.targetStock,
-    }));
-    setItems(demoItems);
-
     // Try real data
     fetch("/api/v1/inventory")
       .then(r => r.json())

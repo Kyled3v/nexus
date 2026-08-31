@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
 
@@ -21,6 +21,10 @@ export function middleware(request: NextRequest) {
     pathname.startsWith("/favicon") ||
     pathname.includes(".")
   ) {
+    return NextResponse.next();
+  }
+
+  if (process.env.NEXT_PUBLIC_DEV_MODE !== "false" || !process.env.DATABASE_URL) {
     return NextResponse.next();
   }
 

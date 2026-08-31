@@ -4,6 +4,8 @@ import { AuthGuard } from "@/components/auth/auth-guard";
 import { getOrgContext } from "@/lib/org/context";
 import { getUserOrganisations } from "@/repositories/multi-org.repository";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const ctx      = await getOrgContext();
   const userOrgs = ctx ? await getUserOrganisations(ctx.userId) : [];

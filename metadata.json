@@ -1,0 +1,6 @@
+{
+  "name": "NEXUS",
+  "description": "NEXUS ERP & Business Management System with POS, Inventory, Sales, and KDOS Automation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
