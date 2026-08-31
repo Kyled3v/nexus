@@ -1,8 +1,8 @@
 import { db } from "@/lib/db";
 import { products, inventory } from "@/lib/db/schema";
 import { eq, ilike, and, or } from "drizzle-orm";
-import type { ProductWithStock } from "@/domain/products/types";
 import { DEMO_PRODUCTS } from "@/data/demo-products";
+import type { Status } from "@/types/core";
 
 export async function getProducts(filters?: {
   organisationId?: string;
@@ -164,4 +164,186 @@ export async function getProductsWithStock(organisationId: string, branchId: str
     reservedStock:p.reservedStock,
     availableStock: p.availableStock,
   }));
+}
+
+export async function createProduct(organisationId: string, data: {
+  sku: string;
+  barcode?: string | null;
+  name: string;
+  costPrice: number | string;
+  sellingPrice: number | string;
+  taxRate?: number | string;
+  taxInclusive?: boolean;
+  reorderLevel?: number;
+  targetStock?: number;
+  minStock?: number;
+  maxStock?: number;
+  status?: string;
+  initialStock?: number;
+  branchId?: string;
+}) {
+  try {
+    const [created] = await db
+      .insert(products)
+      .values({
+        organisationId,
+        sku:          data.sku,
+        barcode:      data.barcode ?? null,
+        name:         data.name,
+        costPrice:    String(data.costPrice),
+        sellingPrice: String(data.sellingPrice),
+        taxRate:      String(data.taxRate ?? "15"),
+        taxInclusive: data.taxInclusive ?? true,
+        reorderLevel: data.reorderLevel ?? 10,
+        targetStock:  data.targetStock ?? 50,
+        minStock:     data.minStock ?? 5,
+        maxStock:     data.maxStock ?? 100,
+        status:       data.status ?? "active",
+      })
+      .returning();
+
+    if (data.initialStock && data.initialStock > 0 && created) {
+      await db.insert(inventory).values({
+        organisationId,
+        branchId: data.branchId || "demo-branch-main",
+        productId: created.id,
+        currentStock: data.initialStock,
+        reservedStock: 0,
+      });
+    }
+
+    if (created) return created;
+  } catch (err) {
+    console.warn("[Products] DB createProduct fallback to memory:", err);
+  }
+
+  const newId = "prod-" + Date.now();
+  const createdDemo = {
+    id:           newId,
+    organisationId,
+    sku:          data.sku,
+    barcode:      data.barcode ?? null,
+    name:         data.name,
+    costPrice:    String(data.costPrice),
+    sellingPrice: String(data.sellingPrice),
+    taxRate:      String(data.taxRate ?? "15"),
+    taxInclusive: data.taxInclusive ?? true,
+    reorderLevel: data.reorderLevel ?? 10,
+    targetStock:  data.targetStock ?? 50,
+    minStock:     data.minStock ?? 5,
+    maxStock:     data.maxStock ?? 100,
+    status:       data.status ?? "active",
+    imageUrl:     null,
+  };
+
+  DEMO_PRODUCTS.unshift({
+    id: newId,
+    businessId: organisationId,
+    sku: data.sku,
+    barcode: data.barcode || undefined,
+    name: data.name,
+    costPrice: Number(data.costPrice),
+    sellingPrice: Number(data.sellingPrice),
+    taxRate: Number(data.taxRate ?? 15),
+    taxInclusive: data.taxInclusive ?? true,
+    reorderLevel: data.reorderLevel ?? 10,
+    targetStock: data.targetStock ?? 50,
+    minStock: data.minStock ?? 5,
+    maxStock: data.maxStock ?? 100,
+    status: (data.status as Status) ?? "active",
+    currentStock: data.initialStock ?? 20,
+    reservedStock: 0,
+    availableStock: data.initialStock ?? 20,
+    stockStatus: "ok",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    unit: "Each",
+    attributes: {},
+  });
+
+  return createdDemo;
+}
+
+export async function updateProduct(organisationId: string, id: string, data: Partial<{
+  sku: string;
+  barcode?: string | null;
+  name: string;
+  costPrice: number | string;
+  sellingPrice: number | string;
+  taxRate?: number | string;
+  taxInclusive?: boolean;
+  reorderLevel?: number;
+  targetStock?: number;
+  minStock?: number;
+  maxStock?: number;
+  status?: string;
+}>) {
+  try {
+    const updatePayload: Record<string, unknown> = { updatedAt: new Date() };
+    if (data.sku !== undefined) updatePayload.sku = data.sku;
+    if (data.barcode !== undefined) updatePayload.barcode = data.barcode;
+    if (data.name !== undefined) updatePayload.name = data.name;
+    if (data.costPrice !== undefined) updatePayload.costPrice = String(data.costPrice);
+    if (data.sellingPrice !== undefined) updatePayload.sellingPrice = String(data.sellingPrice);
+    if (data.taxRate !== undefined) updatePayload.taxRate = String(data.taxRate);
+    if (data.taxInclusive !== undefined) updatePayload.taxInclusive = data.taxInclusive;
+    if (data.reorderLevel !== undefined) updatePayload.reorderLevel = data.reorderLevel;
+    if (data.targetStock !== undefined) updatePayload.targetStock = data.targetStock;
+    if (data.minStock !== undefined) updatePayload.minStock = data.minStock;
+    if (data.maxStock !== undefined) updatePayload.maxStock = data.maxStock;
+    if (data.status !== undefined) updatePayload.status = data.status;
+
+    const [updated] = await db
+      .update(products)
+      .set(updatePayload)
+      .where(and(eq(products.id, id), eq(products.organisationId, organisationId)))
+      .returning();
+
+    if (updated) return updated;
+  } catch {}
+
+  const demo = DEMO_PRODUCTS.find(p => p.id === id);
+  if (demo) {
+    if (data.sku !== undefined) demo.sku = data.sku;
+    if (data.name !== undefined) demo.name = data.name;
+    if (data.barcode !== undefined) demo.barcode = data.barcode || undefined;
+    if (data.costPrice !== undefined) demo.costPrice = Number(data.costPrice);
+    if (data.sellingPrice !== undefined) demo.sellingPrice = Number(data.sellingPrice);
+    if (data.taxRate !== undefined) demo.taxRate = Number(data.taxRate);
+    if (data.status !== undefined) demo.status = data.status as Status;
+    if (data.reorderLevel !== undefined) demo.reorderLevel = data.reorderLevel;
+    if (data.targetStock !== undefined) demo.targetStock = data.targetStock;
+  }
+
+  return {
+    id,
+    organisationId,
+    sku: data.sku ?? demo?.sku ?? "SKU",
+    barcode: data.barcode ?? demo?.barcode ?? null,
+    name: data.name ?? demo?.name ?? "Product",
+    costPrice: String(data.costPrice ?? demo?.costPrice ?? "0"),
+    sellingPrice: String(data.sellingPrice ?? demo?.sellingPrice ?? "0"),
+    taxRate: String(data.taxRate ?? demo?.taxRate ?? "15"),
+    taxInclusive: data.taxInclusive ?? demo?.taxInclusive ?? true,
+    reorderLevel: data.reorderLevel ?? demo?.reorderLevel ?? 10,
+    targetStock: data.targetStock ?? demo?.targetStock ?? 50,
+    minStock: data.minStock ?? demo?.minStock ?? 5,
+    maxStock: data.maxStock ?? demo?.maxStock ?? 100,
+    status: data.status ?? demo?.status ?? "active",
+    imageUrl: null,
+  };
+}
+
+export async function deleteProduct(organisationId: string, id: string) {
+  try {
+    await db
+      .delete(products)
+      .where(and(eq(products.id, id), eq(products.organisationId, organisationId)));
+  } catch {}
+
+  const idx = DEMO_PRODUCTS.findIndex(p => p.id === id);
+  if (idx >= 0) {
+    DEMO_PRODUCTS.splice(idx, 1);
+  }
+  return { success: true };
 }

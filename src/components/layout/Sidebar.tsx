@@ -4,14 +4,16 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, ShoppingCart, Package, Warehouse,
   Truck, Users, TrendingUp, DollarSign, BarChart2,
-  Zap, Settings, ChevronRight, Building2,
+  Zap, Settings, ChevronRight, Building2, ArrowLeftRight,
+  FileText, Sparkles,
 } from "lucide-react";
 import { APP_CONFIG, NAV_ITEMS } from "@/config/app";
 
 const ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   LayoutDashboard, ShoppingCart, Package, Warehouse,
   Truck, Users, TrendingUp, DollarSign, BarChart2,
-  Zap, Settings,
+  Zap, Settings, Building2, ArrowLeftRight, FileText,
+  Sparkles,
 };
 
 interface SidebarProps {

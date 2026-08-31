@@ -1,4 +1,4 @@
-﻿export const APP_CONFIG = {
+export const APP_CONFIG = {
   name: 'NEXUS',
   tagline: 'by KyleDev Software Systems',
   poweredBy: 'Powered by KDOS',
@@ -12,10 +12,14 @@ export const NAV_ITEMS = [
   { label: 'POS',         href: '/pos',             icon: 'ShoppingCart'    },
   { label: 'Products',    href: '/products',        icon: 'Package'         },
   { label: 'Inventory',   href: '/inventory',       icon: 'Warehouse'       },
+  { label: 'Transfers',   href: '/transfers',       icon: 'ArrowLeftRight'  },
   { label: 'Purchasing',  href: '/purchasing',      icon: 'Truck'           },
+  { label: 'Suppliers',   href: '/suppliers',       icon: 'Building2'       },
+  { label: 'Invoicing',   href: '/invoices',        icon: 'FileText'        },
   { label: 'Customers',   href: '/customers',       icon: 'Users'           },
   { label: 'Leads',       href: '/leads',           icon: 'TrendingUp'      },
   { label: 'Finance',     href: '/finance',         icon: 'DollarSign'      },
+  { label: 'AI Insights', href: '/ai-insights',     icon: 'Sparkles'        },
   { label: 'Reports',     href: '/reports',         icon: 'BarChart2'       },
   { label: 'Automation',  href: '/automation',      icon: 'Zap'             },
   { label: 'Settings',    href: '/settings',        icon: 'Settings'        },
