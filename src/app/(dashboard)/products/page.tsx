@@ -4,8 +4,9 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
-import { Search, Plus, Package, Edit2, Trash2, CheckCircle2 } from "lucide-react";
+import { Search, Plus, Package, Edit2, Trash2, CheckCircle2, Upload } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { ImportModal } from "@/components/migration/ImportModal";
 
 interface DbProduct {
   id:           string;
@@ -33,6 +34,7 @@ export default function ProductsPage() {
   // Modal State
   const [isAddOpen,    setIsAddOpen]    = useState(false);
   const [isEditOpen,   setIsEditOpen]   = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [editingProd,  setEditingProd]  = useState<DbProduct | null>(null);
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -209,7 +211,17 @@ export default function ProductsPage() {
             {loading ? "Loading..." : `${products.length} products in catalogue`}
           </p>
         </div>
-        <Button size="sm" onClick={openAddModal}><Plus size={14} />Add Product</Button>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => setIsImportOpen(true)}
+            className="flex items-center gap-1.5"
+          >
+            <Upload size={14} /> Import Products (CSV/Sage)
+          </Button>
+          <Button size="sm" onClick={openAddModal}><Plus size={14} />Add Product</Button>
+        </div>
       </header>
 
       <div className="page-filters">
@@ -510,6 +522,21 @@ export default function ProductsPage() {
           </div>
         </form>
       </Modal>
+
+      <ImportModal
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+        defaultEntity="products"
+        onSuccess={() => {
+          fetch("/api/v1/products")
+            .then(r => r.json())
+            .then((res: { data?: DbProduct[] }) => {
+              if (res.data) setProducts(res.data);
+            })
+            .catch(() => {});
+          showToast("Imported products successfully loaded!");
+        }}
+      />
     </div>
   );
 }

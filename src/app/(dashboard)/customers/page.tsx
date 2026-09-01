@@ -4,7 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
-import { Search, Plus, UserPlus, Phone, Mail, CheckCircle2 } from "lucide-react";
+import { Search, Plus, UserPlus, Phone, Mail, CheckCircle2, Upload } from "lucide-react";
+import { ImportModal } from "@/components/migration/ImportModal";
 
 interface Customer {
   id: string;
@@ -36,6 +37,7 @@ export default function CustomersPage() {
 
   // Modal State
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -147,7 +149,17 @@ export default function CustomersPage() {
             {loading ? "Loading..." : `${customers.length} business & trade accounts`}
           </p>
         </div>
-        <Button size="sm" onClick={openAddModal}><Plus size={14} />Add Customer</Button>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => setIsImportOpen(true)}
+            className="flex items-center gap-1.5"
+          >
+            <Upload size={14} /> Import from Sage / Excel
+          </Button>
+          <Button size="sm" onClick={openAddModal}><Plus size={14} />Add Customer</Button>
+        </div>
       </header>
 
       <dl className="summary-stats">
@@ -352,6 +364,22 @@ export default function CustomersPage() {
           </div>
         </form>
       </Modal>
+
+      <ImportModal
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+        defaultEntity="customers"
+        onSuccess={() => {
+          // Re-fetch customers
+          fetch("/api/v1/customers")
+            .then(r => r.json())
+            .then((result: { data?: Customer[] }) => {
+              if (result.data) setCustomers(result.data);
+            })
+            .catch(() => {});
+          showToast("Imported customers successfully loaded!");
+        }}
+      />
     </div>
   );
 }

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getRequestContext } from "@/lib/auth/context";
+import { getOrgContext } from "@/lib/org/context";
 import { DEMO_SUPPLIERS } from "@/data/demo-suppliers";
 
 let suppliersStore = [...DEMO_SUPPLIERS];
 
 export async function GET(req: NextRequest) {
-  const ctx = await getRequestContext(req);
-  if (!ctx.authenticated) {
+  const ctx = await getOrgContext();
+  if (!ctx) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -38,8 +38,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const ctx = await getRequestContext(req);
-  if (!ctx.authenticated) {
+  const ctx = await getOrgContext();
+  if (!ctx) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -82,8 +82,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const ctx = await getRequestContext(req);
-  if (!ctx.authenticated) {
+  const ctx = await getOrgContext();
+  if (!ctx) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -112,8 +112,8 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const ctx = await getRequestContext(req);
-  if (!ctx.authenticated) {
+  const ctx = await getOrgContext();
+  if (!ctx) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

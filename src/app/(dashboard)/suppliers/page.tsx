@@ -301,7 +301,7 @@ export default function SuppliersPage() {
                   <h3 className="font-bold text-white text-base leading-tight">{s.name}</h3>
                   <span className="text-xs font-mono text-neutral-400">{s.code}</span>
                 </div>
-                <Badge variant={s.status === "active" ? "default" : "secondary"}>
+                <Badge variant={s.status === "active" ? "success" : "muted"}>
                   {s.status}
                 </Badge>
               </div>

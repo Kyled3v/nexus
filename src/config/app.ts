@@ -20,7 +20,9 @@ export const NAV_ITEMS = [
   { label: 'Leads',       href: '/leads',           icon: 'TrendingUp'      },
   { label: 'Finance',     href: '/finance',         icon: 'DollarSign'      },
   { label: 'AI Insights', href: '/ai-insights',     icon: 'Sparkles'        },
+  { label: 'AI Agents',   href: '/agents',          icon: 'Bot'             },
   { label: 'Reports',     href: '/reports',         icon: 'BarChart2'       },
   { label: 'Automation',  href: '/automation',      icon: 'Zap'             },
+  { label: 'Data Migration', href: '/import',        icon: 'Upload'          },
   { label: 'Settings',    href: '/settings',        icon: 'Settings'        },
 ] as const;

@@ -4,13 +4,14 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
-import { CheckCircle2, Building2, MapPin, ShieldCheck, Bell, CreditCard } from "lucide-react";
+import { CheckCircle2, Building2, MapPin, ShieldCheck, Bell, CreditCard, Share2, Globe, Key } from "lucide-react";
 import { DEMO_BUSINESS, DEMO_BRANCHES } from "@/data/demo-business";
 import type { Branch } from "@/domain/business/types";
 
 const SECTIONS = [
   { id: "business",      label: "Business Profile",    icon: Building2 },
   { id: "branches",      label: "Branches",            icon: MapPin },
+  { id: "channels",      label: "Social & Marketing",  icon: Share2 },
   { id: "permissions",   label: "Roles & Permissions", icon: ShieldCheck },
   { id: "notifications", label: "Notifications",       icon: Bell },
   { id: "billing",       label: "Billing & Plan",      icon: CreditCard },
@@ -55,6 +56,61 @@ export default function SettingsPage() {
     phone: "",
     email: "",
   });
+
+  // Channels state
+  const [channels, setChannels] = useState([
+    {
+      id: "meta",
+      name: "Meta for Business (Instagram & Facebook)",
+      handle: "@welcomepaint_sa",
+      pageId: "fb_page_89210934",
+      connected: true,
+      iconColor: "text-blue-400 bg-blue-500/10 border-blue-500/20",
+      description: "Auto-publishes feed posts, promotional stories, and product reels across Facebook & Instagram.",
+      lastSync: "Today, 06:40 SAST",
+    },
+    {
+      id: "linkedin",
+      name: "LinkedIn Commercial Page",
+      handle: "Welcome Paint Center Commercial",
+      pageId: "urn:li:organization:7812903",
+      connected: true,
+      iconColor: "text-sky-400 bg-sky-500/10 border-sky-500/20",
+      description: "B2B contractor case studies, commercial architectural coating specs, and SARS VAT trade credit highlights.",
+      lastSync: "Yesterday, 14:15 SAST",
+    },
+    {
+      id: "gmb",
+      name: "Google Business Profile (Local SEO)",
+      handle: "Sandton Central & Durban Hubs",
+      pageId: "gmb_loc_sandton_01",
+      connected: true,
+      iconColor: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+      description: "Local store updates, special holiday trading hours, and computerized paint-tinting turnarounds to boost Google Maps ranking.",
+      lastSync: "Today, 07:00 SAST",
+    },
+    {
+      id: "whatsapp",
+      name: "WhatsApp Business Cloud API",
+      handle: "+27 11 555 0100 (Trade Desk)",
+      pageId: "waba_phone_992140",
+      connected: true,
+      iconColor: "text-green-400 bg-green-500/10 border-green-500/20",
+      description: "Direct trade contractor broadcast specials, PDF tax invoice links, and instant quotation follow-ups.",
+      lastSync: "Today, 06:50 SAST",
+    },
+  ]);
+
+  const toggleChannel = (id: string) => {
+    setChannels(prev => prev.map(c => {
+      if (c.id === id) {
+        const nextState = !c.connected;
+        showToast(`${c.name} ${nextState ? "connected successfully" : "disconnected"}`);
+        return { ...c, connected: nextState };
+      }
+      return c;
+    }));
+  };
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -227,6 +283,140 @@ export default function SettingsPage() {
                 ))}
               </ul>
             </Card>
+          )}
+
+          {section === "channels" && (
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between w-full">
+                    <div>
+                      <CardTitle>Connected Social & Marketing Channels</CardTitle>
+                      <p className="text-xs text-white/50 mt-1">
+                        Active integration bridges managed by KDOS Self-Marketing (KDOS-MKT-07) and Social Media (KDOS-SOC-08) agents
+                      </p>
+                    </div>
+                    <Badge variant="success" className="flex items-center gap-1">
+                      <Globe size={12} /> 4 Channels Operational
+                    </Badge>
+                  </div>
+                </CardHeader>
+
+                <div className="space-y-3 p-1">
+                  {channels.map((c) => (
+                    <div
+                      key={c.id}
+                      className="p-4 rounded-xl bg-white/[0.03] border border-white/5 hover:border-white/10 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`p-2.5 rounded-lg border text-sm font-semibold ${c.iconColor}`}>
+                          <Share2 size={18} />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <strong className="text-white text-sm font-semibold">{c.name}</strong>
+                            <Badge variant={c.connected ? "success" : "muted"}>
+                              {c.connected ? "Active & Linked" : "Disconnected"}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-white/60 mt-1 max-w-xl leading-relaxed">
+                            {c.description}
+                          </p>
+                          <div className="flex items-center gap-3 mt-2 text-[11px] text-white/40">
+                            <span>Account: <strong className="text-white/70">{c.handle}</strong></span>
+                            <span>•</span>
+                            <span>ID: <code className="bg-black/30 px-1.5 py-0.5 rounded text-cyan-400 font-mono text-[10px]">{c.pageId}</code></span>
+                            <span>•</span>
+                            <span>Last Synced: {c.lastSync}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-end md:self-center">
+                        <Button
+                          variant={c.connected ? "secondary" : "primary"}
+                          size="sm"
+                          onClick={() => toggleChannel(c.id)}
+                        >
+                          {c.connected ? "Disconnect" : "Connect via OAuth"}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+
+              {/* Developer & Platform Requirements Guide */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Key size={16} className="text-amber-400" />
+                    <CardTitle>What You Need: Production Credentials & Developer Setup</CardTitle>
+                  </div>
+                  <p className="text-xs text-white/50 mt-1">
+                    To link your official business accounts for live broadcast and automated post dispatching, here are the required credentials from each provider:
+                  </p>
+                </CardHeader>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <strong className="text-white text-sm flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-blue-400" /> Meta for Business
+                      </strong>
+                      <span className="text-[11px] text-white/40">Instagram & Facebook</span>
+                    </div>
+                    <ul className="text-white/60 space-y-1.5 list-disc pl-4 text-[11px]">
+                      <li><strong>Meta Developer App</strong> created at <code className="text-cyan-300">developers.facebook.com</code></li>
+                      <li>Permissions: <code className="text-amber-300">pages_manage_posts</code>, <code className="text-amber-300">instagram_content_publish</code></li>
+                      <li>Facebook Business Page linked to an Instagram Professional Account.</li>
+                    </ul>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <strong className="text-white text-sm flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-sky-400" /> LinkedIn Commercial
+                      </strong>
+                      <span className="text-[11px] text-white/40">B2B Trade Network</span>
+                    </div>
+                    <ul className="text-white/60 space-y-1.5 list-disc pl-4 text-[11px]">
+                      <li><strong>LinkedIn Developer App</strong> created at <code className="text-cyan-300">developer.linkedin.com</code></li>
+                      <li>Permissions: <code className="text-amber-300">w_organization_social</code> (Share on LinkedIn API)</li>
+                      <li>Admin rights on your company’s LinkedIn Page.</li>
+                    </ul>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <strong className="text-white text-sm flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400" /> Google Business Profile
+                      </strong>
+                      <span className="text-[11px] text-white/40">Local Store SEO</span>
+                    </div>
+                    <ul className="text-white/60 space-y-1.5 list-disc pl-4 text-[11px]">
+                      <li><strong>Google Cloud Project</strong> with <code className="text-cyan-300">Google My Business API</code> enabled</li>
+                      <li>OAuth Scope: <code className="text-amber-300">https://www.googleapis.com/auth/business.manage</code></li>
+                      <li>Verified physical store addresses (e.g. Sandton Trade Counter).</li>
+                    </ul>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <strong className="text-white text-sm flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-green-400" /> WhatsApp Cloud API
+                      </strong>
+                      <span className="text-[11px] text-white/40">Contractor Broadcasts</span>
+                    </div>
+                    <ul className="text-white/60 space-y-1.5 list-disc pl-4 text-[11px]">
+                      <li><strong>WhatsApp Business Platform</strong> Account (Meta Business Manager)</li>
+                      <li>A dedicated South African business phone number (e.g. <code className="text-cyan-300">+27 11 555 0100</code>)</li>
+                      <li>Opted-in contractor database for SARS invoice delivery and clearance promos.</li>
+                    </ul>
+                  </div>
+                </div>
+              </Card>
+            </div>
           )}
 
           {section === "permissions" && (

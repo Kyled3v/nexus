@@ -67,25 +67,19 @@ export function BarcodeScannerModal({
     [onScan, onClose, playBeep]
   );
 
-  useEffect(() => {
-    let isCancelled = false;
+  const startCamera = useCallback(() => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setCameraError("Camera API is not supported in this browser environment.");
+      setCameraActive(false);
+      return;
+    }
 
-    async function initCamera() {
-      if (!isOpen) return;
-      try {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          throw new Error("Camera API is not supported in this browser environment.");
-        }
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
-          audio: false,
-        });
-
-        if (isCancelled) {
-          stream.getTracks().forEach((t) => t.stop());
-          return;
-        }
-
+    navigator.mediaDevices
+      .getUserMedia({
+        video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false,
+      })
+      .then((stream) => {
         streamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
@@ -93,29 +87,29 @@ export function BarcodeScannerModal({
         }
         setCameraActive(true);
         setCameraError(null);
-      } catch (err: unknown) {
-        if (!isCancelled) {
-          const msg = err instanceof Error ? err.message : "Unable to access camera";
-          setCameraError(msg);
-          setCameraActive(false);
-        }
-      }
-    }
+      })
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : "Unable to access camera";
+        setCameraError(msg);
+        setCameraActive(false);
+      });
+  }, []);
 
-    if (isOpen) {
-      initCamera();
-    }
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const timer = setTimeout(() => {
+      startCamera();
+    }, 0);
 
     return () => {
-      isCancelled = true;
+      clearTimeout(timer);
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((t) => t.stop());
         streamRef.current = null;
       }
-      setCameraActive(false);
-      setScannedFeedback(null);
     };
-  }, [isOpen]);
+  }, [isOpen, startCamera]);
 
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();

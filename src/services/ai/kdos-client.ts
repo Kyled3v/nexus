@@ -60,71 +60,66 @@ export interface KdosBusinessContext {
   data: Record<string, unknown>;
 }
 
+import { getAgentActions, approveAgentAction, addAgentLog } from "./agents/registry";
+
 // --- Integration contract ---
-// Replace these stubs with real KDOS API calls when the integration is ready.
+// KDOS Integration Client bridging NEXUS ERP domain and the KDOS Multi-Agent Network.
 
 export const KdosClient = {
   async getRecommendations(_context: KdosBusinessContext): Promise<KdosRecommendation[]> {
-    // DEV STUB: returns realistic demo recommendations
-    return [
-      {
-        id: "kdos-rec-001",
-        type: "restock",
-        title: "Restock Plascon Exterior 5L",
-        summary: "Current stock (1 unit) is critically below reorder level (12 units).",
-        detail: "Based on current sales velocity and lead time of 5 days, stock will be exhausted before the next possible delivery. Recommend placing an order for 45 units to reach target stock.",
-        confidence: 0.94,
-        impact: "high",
-        urgency: "critical",
-        actions: [
-          { id: "a1", label: "Create Purchase Order", type: "approve", requiresApproval: true },
-          { id: "a2", label: "Dismiss",               type: "dismiss", requiresApproval: false },
-        ],
-        dataPoints: ["Current stock: 1", "Reorder level: 12", "Avg daily sales: 2.4", "Supplier lead time: 5 days"],
-        generatedAt: new Date().toISOString(),
-      },
-      {
-        id: "kdos-rec-002",
-        type: "marketing",
-        title: "Dulux Eggshell 5L — Overstock Opportunity",
-        summary: "67 units in stock vs target of 40. Consider a promotional campaign.",
-        detail: "Overstock is tying up capital. A 10% promotional discount could clear excess stock within 3 weeks based on current demand patterns.",
-        confidence: 0.78,
-        impact: "medium",
-        urgency: "low",
-        actions: [
-          { id: "a3", label: "Review Promotion",      type: "approve", requiresApproval: true },
-          { id: "a4", label: "Dismiss",               type: "dismiss", requiresApproval: false },
-        ],
-        dataPoints: ["Current stock: 67", "Target stock: 40", "Excess units: 27", "Tied capital: R3,510"],
-        generatedAt: new Date().toISOString(),
-      },
-    ];
+    const actions = getAgentActions("pending_approval");
+    return actions.map(act => ({
+      id: act.id,
+      type: (act.category === "purchase_order" ? "restock" : act.category === "price_adjustment" ? "pricing" : "operational") as KdosRecommendationType,
+      title: act.title,
+      summary: act.description,
+      detail: `Estimated Impact: ${act.estimatedImpact}`,
+      confidence: 0.95,
+      impact: (act.severity === "critical" ? "high" : act.severity === "high" ? "high" : "medium") as "low" | "medium" | "high",
+      urgency: (act.severity === "critical" ? "critical" : act.severity === "high" ? "high" : "medium") as "low" | "medium" | "high" | "critical",
+      actions: [
+        { id: `approve-${act.id}`, label: "Approve & Execute", type: "approve", requiresApproval: true },
+        { id: `dismiss-${act.id}`, label: "Dismiss", type: "dismiss", requiresApproval: false },
+      ],
+      dataPoints: [
+        `Agent: ${act.agentId}`,
+        `Severity: ${act.severity}`,
+        `Impact: ${act.estimatedImpact}`,
+      ],
+      generatedAt: act.createdAt,
+    }));
   },
 
   async getRiskAlerts(_context: KdosBusinessContext): Promise<KdosRiskAlert[]> {
-    return [
-      {
-        id: "kdos-risk-001",
-        type: "stockout",
-        title: "Imminent stockout — Rust-Oleum Primer 1L",
-        description: "Product is currently out of stock with no purchase order raised. Revenue impact estimated at R950/day.",
-        severity: "critical",
-        affectedEntities: ["prod-005"],
-        detectedAt: new Date().toISOString(),
-      },
-    ];
+    const actions = getAgentActions("pending_approval");
+    return actions
+      .filter(a => a.severity === "critical" || a.severity === "high")
+      .map(act => ({
+        id: `risk-${act.id}`,
+        type: (act.category === "purchase_order" ? "stockout" : "cash_flow") as KdosRiskType,
+        title: act.title,
+        description: act.description,
+        severity: act.severity,
+        affectedEntities: [act.agentId],
+        detectedAt: act.createdAt,
+      }));
   },
 
   async submitEvent(_event: { type: string; businessId: string; data: Record<string, unknown> }): Promise<void> {
-    // DEV STUB: In production, this publishes to the KDOS event bus
-    if (process.env.NEXT_PUBLIC_DEV_MODE === "true") {
-      console.debug("[KDOS] Event submitted:", _event.type, _event.data);
-    }
+    addAgentLog({
+      agentId: "orchestrator",
+      agentName: "KDOS Event Dispatcher",
+      level: "info",
+      message: `Event [${_event.type}] recorded from business ${_event.businessId}`,
+      details: _event.data,
+    });
   },
 
   async requestApproval(_recommendation: KdosRecommendation, _businessId: string): Promise<{ approved: boolean; approvedBy?: string }> {
-    // DEV STUB: In production, creates an approval request in KDOS
-    return { approved: false };
+    const executed = approveAgentAction(_recommendation.id, "Executive User");
+    return {
+      approved: !!executed,
+      approvedBy: executed?.approvedBy,
+    };
   },
 };
